@@ -1,16 +1,24 @@
+/**************************************
+ *         Physics calculator
+ *            CSR, 2014
+ * http://info.dcsr.ru/projects/phcalc/
+ *
+ * Main functions source file (phcalc_main.c)
+ *
+ **************************************/
+
 #include <stdlib.h>
 #include <string.h>
 
 #include "phcalc.h"
 #include "phcalc_in.h"
 
-void phcalc_adddef(char *name, phcalc_expr expr);
-
 void phcalc_expr_release_rec(phcalc_toper *oper);
+phcalc_toper *phcalc_copyexpr_rec(phcalc_toper *oper);
 
 phcalc_inst phcalc_create_inst() {
-	phcalc_inst inst = (phcalc_inst) malloc(sizeof(struct _phcalc_inst));
-
+	phcalc_inst inst = NEW(struct _phcalc_inst);
+	inst->defs	= 0;
 	return inst;
 }
 
@@ -36,7 +44,15 @@ void phcalc_expr_release_rec(phcalc_toper *oper) {
 	free(oper);
 }
 
+void phcalc_obj_release(phcalc_inst inst, phcalc_obj obj) {
+	// TODO:
+}
+
 int phcalc_query(phcalc_inst inst, phcalc_expr expr) {
+	if(expr->roper->type == PHC_OPER_DEF){
+		phcalc_adddef( inst, expr->names[expr->roper->args[0]->id], expr );
+		return 1;
+	}
 	return 0;
 }
 
@@ -55,17 +71,29 @@ int phcalc_expr_allocname(phcalc_expr expr, const char *name) {
 }
 
 phcalc_expr phcalc_copyexpr(phcalc_expr expr, phcalc_toper *oper) {
-	return 0;
+	// TODO: copy only used names if oper!=expr->roper
+	int i;
+	phcalc_expr nexpr = NEW(struct _phcalc_expr);
+	if(expr->names!=0){
+		for(i=0; expr->names[i]; i++){}
+		nexpr->names = NEWS(char*,i+1);
+		for(i=0; expr->names[i]; i++)
+			nexpr->names[i] = expr->names[i];
+		nexpr->names[i] = 0;
+	} else
+		nexpr->names = 0;
+	nexpr->roper = phcalc_copyexpr_rec(oper);
+	return nexpr;
 }
 
-int phcalc_execoper(phcalc_inst inst, phcalc_expr expr, phcalc_toper toper) {
-	switch(toper.type){
-	case PHC_OPER_VAR: {
-		int type = phcalc_gettype(inst,expr->names[toper.id]);
-
-		break; }
-	}
-	return 1;
+phcalc_toper *phcalc_copyexpr_rec(phcalc_toper *oper) {
+	int i;
+	phcalc_toper *noper = NEW(phcalc_toper);
+	*noper = *oper;
+	noper->args = NEWS(phcalc_toper*,oper->nargs);
+	for(i=0; i<oper->nargs; i++)
+		noper->args[i] = phcalc_copyexpr_rec(oper->args[i]);
+	return noper;
 }
 
 int phcalc_gettype(phcalc_inst inst, const char *name) {
@@ -86,6 +114,21 @@ int phcalc_getoperpriority(phcalc_opertype opertype) {
 	return 0;
 }
 
-void phcalc_adddef(char *name, phcalc_expr expr) {
+void phcalc_adddef(phcalc_inst inst, char *name, phcalc_expr expr) {
+	phcalc_inst_def *def = (phcalc_inst_def*) malloc(sizeof(phcalc_inst_def));
+	def->name	= name;
+	def->expr	= phcalc_copyexpr(expr,expr->roper);
+	//def->type	= 
+	def->next	= inst->defs;
+	inst->defs	= def;
+}
 
+phcalc_expr phcalc_getdef(phcalc_inst inst, const char *name) {
+	phcalc_inst_def *iter = inst->defs;
+	while(iter!=0){
+		if( strcmp(iter->name,name)==0 )
+			return iter->expr;
+		iter = iter->next;
+	}
+	return 0;
 }

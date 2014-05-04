@@ -16,7 +16,7 @@ int phcalc_strexpr(phcalc_inst inst, phcalc_expr expr, char *str, int len) {
 }
 
 int phcalc_strexpr_2(phcalc_expr expr, phcalc_toper *oper, char *str, int len) {
-	int i, p = 0;
+	int p = 0;
 	char buf[32];
 	switch(oper->type){
 	case PHC_OPER_VAR:
@@ -24,7 +24,7 @@ int phcalc_strexpr_2(phcalc_expr expr, phcalc_toper *oper, char *str, int len) {
 		p += strlen(expr->names[oper->id]);
 		break;
 	case PHC_OPER_NUM:
-		sprintf(buf,"%0.2lf",oper->num.value);
+		sprintf_s(buf,32,"%0.2lf",oper->num.value);
 		strcpy(str,buf);
 		p += strlen(buf);
 		break;

@@ -1,13 +1,22 @@
+/**************************************
+ *         Physics calculator
+ *            CSR, 2014
+ * http://info.dcsr.ru/projects/phcalc/
+ *
+ * Inner header file (phcalc_in.h)
+ * This file used only inside of the library
+ * It conatains declaration used only
+ * in sources of the library
+ *
+ **************************************/
+
 #pragma once
 
-/*
-typedef char* lpchar;
-
-#define NEW(type)				(type*) malloc(sizeof(type))
-#define NEWS(type,cnt)			(type*) malloc(sizeof(type)*(cnt))	//calloc(cnt,sizeof(type))
-#define REALCS(ref,type,cnt)	(type*) realloc(ref,sizeof(type)*cnt)
+#define NEW(type)				((type*) malloc(sizeof(type)))
+#define NEWS(type,cnt)			((type*) malloc(sizeof(type)*(cnt)))
+#define REALCS(ref,type,cnt)	((type*) realloc(ref,sizeof(type)*(cnt)))
 #define FREE(ref)				free(ref);
-*/
+
 
 /*#define OPER_DEF		0x01		// define a variable ( := )
 #define OPER_VAR		0x02		// retreive variable ( x )
@@ -33,19 +42,22 @@ typedef char* lpchar;
 #define TYPE_FUNC		0x108*/
 
 typedef enum _phcalc_opertype {
-	PHC_OPER_DEF,
-	PHC_OPER_VAR,
-	PHC_OPER_FNC,
-	PHC_OPER_NUM,
-	PHC_OPER_VCT,
-	PHC_OPER_PRG,
+	PHC_OPER_DEF,		// definition ( := )
+	PHC_OPER_VAR,		// variable ( x )
+	PHC_OPER_FNC,		// function ( sin(x) )
+	PHC_OPER_NUM,		// number ( 1.0'0.1 )
+	PHC_OPER_VCT,		// vector ( {1,2,3} )
+	PHC_OPER_PRG,		// program listing ( x:=0; y:=1 )
 
-	PHC_OPER_ADD,
-	PHC_OPER_SUB,
-	PHC_OPER_MUL,
-	PHC_OPER_DIV,
-	PHC_OPER_POW
+	PHC_OPER_ADD,		// addition ( + )
+	PHC_OPER_SUB,		// substraction ( - )
+	PHC_OPER_MUL,		// multiplication ( * )
+	PHC_OPER_DIV,		// division ( / )
+	PHC_OPER_POW		// power ( ^ )
 } phcalc_opertype;
+
+//typedef enum _phcalc_deftype {
+//};
 
 /*
 Operators priorities
@@ -59,25 +71,20 @@ Operators priorities
 */
 
 typedef struct _phcalc_toper phcalc_toper;
-//typedef struct _phcalc_num phcalc_num;
 typedef struct _phcalc_vector phcalc_vector;
 typedef struct _phcalc_inst_def phcalc_inst_def;
 
 struct _phcalc_inst_def {
 	int type;
 	char *name;
-	phcalc_expr *expr;
+	phcalc_expr expr;
+	phcalc_inst_def *next;
 };
 
 struct _phcalc_inst {
 	int cd;
 	phcalc_inst_def *defs;
 };
-
-/*struct _phcalc_num {
-	double value;
-	double error;
-};*/
 
 struct _phcalc_expr {
 	char **names;
@@ -93,14 +100,12 @@ struct _phcalc_toper {
 	phcalc_num num;
 };
 
-/*struct _phcalc_vector {
-	int size;
-	phcalc_num values[];
-};*/
-
 int phcalc_expr_allocname(phcalc_expr expr, const char *name);
 //const char *phcalc_expr_getname(phcalc_expr expr, int id);
 phcalc_expr phcalc_copyexpr(phcalc_expr expr, phcalc_toper *oper);
+
+void phcalc_adddef(phcalc_inst inst, char *name, phcalc_expr expr);
+phcalc_expr phcalc_getdef(phcalc_inst inst, const char *name);
 
 int phcalc_gettype(phcalc_inst inst, const char *name);
 phcalc_num phcalc_getnum(phcalc_inst inst, const char *name);
@@ -108,7 +113,7 @@ phcalc_vector phcalc_getvecotr(phcalc_inst inst, const char *name);
 
 int phcalc_getoperpriority(phcalc_opertype opertype);
 
-int phcalc_execoper(phcalc_inst inst, phcalc_expr expr, phcalc_toper toper);
+int phcalc_execoper(phcalc_inst inst, phcalc_expr expr, phcalc_toper *toper, phcalc_obj *res);
 
 //int phcalc_getoper
 

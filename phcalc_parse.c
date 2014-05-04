@@ -1,3 +1,12 @@
+/**************************************
+ *         Physics calculator
+ *            CSR, 2014
+ * http://info.dcsr.ru/projects/phcalc/
+ *
+ * Parsing functions source file (phcalc_parse.c)
+ *
+ **************************************/
+
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <stdlib.h>
@@ -15,7 +24,7 @@ int phcalc_parse_sign(const char *str, phcalc_opertype *oper);
 int phcalc_parse_number(const char *str, int len, phcalc_num *num);
 
 phcalc_expr phcalc_parse(phcalc_inst inst, const char *str){
-	phcalc_expr expr = (phcalc_expr) malloc(sizeof(struct _phcalc_expr));
+	phcalc_expr expr = (phcalc_expr) NEW(struct _phcalc_expr);
 	expr->names = 0;
 	expr->roper = phcalc_parse_rec(expr,str,strlen(str));
 	return expr;

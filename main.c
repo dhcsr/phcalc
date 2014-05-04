@@ -7,14 +7,21 @@
 int main(int argc, char *argv[]){
 	char buf[256];
 	phcalc_inst calc = phcalc_create_inst();
-	phcalc_expr e0 = phcalc_parse(calc,"z:=x*(g+x*f+2.0~0.1)");
-	phcalc_strexpr(calc,e0,buf,256);
+	phcalc_expr e0 = phcalc_parse(calc,"x:=2*(10+1)");
+	phcalc_expr e1 = phcalc_parse(calc,"x+5");
+	phcalc_obj r1;
+	//phcalc_strexpr(calc,e0,buf,256);
+	phcalc_query(calc,e0);
+	phcalc_eval(calc,e1,&r1);
 	phcalc_expr_release(calc,e0);
 	//phcalc_expr e1 = phcalc_parse(calc,"x:={0.1,0.2,0.3,0.4,0.5,0.6}");
 	//phcalc_expr e2 = phcalc_parse(calc,"f[x]:=x*sin[x]");
 	for(;;){
-		//char buf[256];
+		phcalc_expr e;
 		gets(buf);
+		e = phcalc_parse(calc,buf);
+		phcalc_strexpr(calc,e,buf,256);
+		puts(buf);
 	}
 	phcalc_destroy_inst(calc);
 	return 0;
