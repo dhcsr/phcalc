@@ -47,6 +47,7 @@ typedef enum _phcalc_opertype {
 	PHC_OPER_FNC,		// function ( sin(x) )
 	PHC_OPER_NUM,		// number ( 1.0'0.1 )
 	PHC_OPER_VCT,		// vector ( {1,2,3} )
+	PHC_OPER_ELM,		// get element form vector ( x[5] )
 	PHC_OPER_PRG,		// program listing ( x:=0; y:=1 )
 
 	PHC_OPER_ADD,		// addition ( + )
@@ -69,6 +70,8 @@ Operators priorities
 5	^
 
 */
+
+#define PHC_OPERF_PEXPR		0x0001		// pass argument as expression, used in function definitions
 
 typedef struct _phcalc_toper phcalc_toper;
 typedef struct _phcalc_vector phcalc_vector;
@@ -95,6 +98,7 @@ struct _phcalc_toper {
 	phcalc_opertype type;
 	int id;
 	int nargs;
+	int flags;
 	phcalc_toper **args;
 	//char *name;
 	phcalc_num num;
@@ -108,14 +112,17 @@ void phcalc_adddef(phcalc_inst inst, char *name, phcalc_expr expr);
 phcalc_expr phcalc_getdef(phcalc_inst inst, const char *name);
 
 int phcalc_gettype(phcalc_inst inst, const char *name);
-phcalc_num phcalc_getnum(phcalc_inst inst, const char *name);
-phcalc_vector phcalc_getvecotr(phcalc_inst inst, const char *name);
+//phcalc_num phcalc_getnum(phcalc_inst inst, const char *name);
+//phcalc_vector phcalc_getvecotr(phcalc_inst inst, const char *name);
 
 int phcalc_getoperpriority(phcalc_opertype opertype);
 
 int phcalc_execoper(phcalc_inst inst, phcalc_expr expr, phcalc_toper *toper, phcalc_obj *res);
+//int phcalc_getstddef(
 
 //int phcalc_getoper
+
+
 
 // Math functions:
 

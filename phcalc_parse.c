@@ -13,6 +13,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <assert.h>
 
 #include "phcalc.h"
 #include "phcalc_in.h"
@@ -23,7 +24,7 @@ phcalc_toper *phcalc_parse_rec(phcalc_expr expr, const char *str, int len);
 int phcalc_parse_sign(const char *str, phcalc_opertype *oper);
 int phcalc_parse_number(const char *str, int len, phcalc_num *num);
 
-phcalc_expr phcalc_parse(phcalc_inst inst, const char *str){
+phcalc_expr phcalc_parse(const char *str){
 	phcalc_expr expr = (phcalc_expr) NEW(struct _phcalc_expr);
 	expr->names = 0;
 	expr->roper = phcalc_parse_rec(expr,str,strlen(str));
@@ -119,6 +120,25 @@ phcalc_toper *phcalc_parse_rec(phcalc_expr expr, const char *str, int len) {
 		oper->nargs	= 0;
 		return oper;
 	}
+	// Case: vector, e.g. "{1,2,3}"
+	if(cnt_depth1==1 && first_brk==0 && cnt_commas>0){
+		int lst_pos = 0, j=0;
+		oper->type		= PHC_OPER_VCT;
+		oper->id		= -1;
+		oper->nargs		= cnt_commas+1;
+		oper->args		= NEWS(phcalc_toper*,oper->nargs);
+		for(i=lst_pos; i<len; i++){
+			if( str[i]==',' || str[i]==')' || str[i]=='}' ){
+				assert(j<oper->nargs);
+				oper->args[j++] = phcalc_parse_rec(expr,str+lst_pos+1,i-lst_pos-1);
+				lst_pos = i;
+				if( str[i]==')' || str[i]=='}' )
+					break;
+			}
+		}
+		return oper;
+	}
+	// Case: expression in brackets, e.g. "(x+1)"
 	if(cnt_depth1==1 && first_brk==0){
 		return phcalc_parse_rec(expr,str+1,len-2);
 	}

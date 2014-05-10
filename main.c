@@ -5,9 +5,11 @@
 #include "phcalc.h"
 
 int main(int argc, char *argv[]){
-	char buf[256];
+	FILE *fd = fopen("prog.txt","rt");
+	phcalc_parsefile(fd);
+	/*char buf[256];
 	phcalc_inst calc = phcalc_create_inst();
-	phcalc_expr e0 = phcalc_parse(calc,"x:=2*(10+1)");
+	phcalc_expr e0 = phcalc_parse(calc,"x:={1,2}");
 	phcalc_expr e1 = phcalc_parse(calc,"x+5");
 	phcalc_obj r1;
 	//phcalc_strexpr(calc,e0,buf,256);
@@ -24,5 +26,5 @@ int main(int argc, char *argv[]){
 		puts(buf);
 	}
 	phcalc_destroy_inst(calc);
-	return 0;
+	return 0;*/
 }

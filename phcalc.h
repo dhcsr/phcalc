@@ -10,6 +10,8 @@
  **************************************/
 #pragma once
 
+#include <stdio.h>
+
 typedef struct _phcalc_inst *phcalc_inst;
 typedef struct _phcalc_expr *phcalc_expr;
 typedef struct _phcalc_num phcalc_num;
@@ -34,10 +36,22 @@ struct _phcalc_num {
 	double error;
 };
 
+// Create new instance
 phcalc_inst phcalc_create_inst();
+
+// Destroy instance and release memory
 void phcalc_destroy_inst(phcalc_inst inst);
 
-phcalc_expr phcalc_parse(phcalc_inst inst, const char *str);
+// Import definition from `src` into `inst`
+void phcalc_import(phcalc_inst inst, phcalc_inst src);
+
+// Parse expression
+phcalc_expr phcalc_parse(const char *str);
+
+// Parse file into new instance
+phcalc_inst phcalc_parsefile(FILE *fd);
+
+
 int phcalc_strexpr(phcalc_inst inst, phcalc_expr expr, char *str, int len);
 void phcalc_expr_release(phcalc_inst inst, phcalc_expr expr);
 void phcalc_obj_release(phcalc_inst inst, phcalc_obj obj);
