@@ -26,8 +26,14 @@ phcalc_inst phcalc_parsefile(FILE *fd) {
 	ttoken *tokens;
 	tsnode *stree;
 	int len;
-	char err[512];
-	phcalc_parse_lexic(fd,&tokens,&len,err);
-	phcalc_parse_syntax(tokens,len,&stree);
+	tparseerr err;
+	if( !phcalc_parse_lexic(fd,&tokens,&len,&err) ){
+		phcalc_parse_printerror(stderr,&err);
+		return 0;
+	}
+	if( !phcalc_parse_syntax(tokens,len,&stree,&err) ){
+		phcalc_parse_printerror(stderr,&err);
+		return 0;
+	}
 	return 0;
 }

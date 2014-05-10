@@ -22,12 +22,17 @@
 
 #define SYNT_STAKSIZE	64
 
-int phcalc_parse_syntax(ttoken *tokens, int tokens_len, tsnode **stree) {
+int phcalc_parse_syntax(ttoken *tokens, int tokens_len, tsnode **stree, tparseerr *err) {
 	tsyntaxctx ctx;
 	int len;
+	tsnode *node;
 	ctx.tokens		= tokens;
 	ctx.tokens_len	= tokens_len;
-	phcalc_parse_syntax_program(&ctx,0,&len);
+	node = phcalc_parse_syntax_program(&ctx,0,&len);
+	if(node==0){
+		*err = ctx.err;
+		return 0;
+	}
 	return 1;
 }
 
@@ -54,8 +59,11 @@ tsnode *new_snode_token(ttoken *token) {
 }
 
 tsnode *phcalc_parse_syntax_program(tsyntaxctx *ctx, int pos, int *len) {
-	tsnode *node	= new_snode2(SNODE_PROGRAM,1);
-	node->nodes[0]	= phcalc_parse_syntax_lines(ctx,pos,len);
+	tsnode *node;
+	tsnode *node1	= phcalc_parse_syntax_lines(ctx,pos,len);
+	if(node1==0) return 0;
+	node = new_snode2(SNODE_PROGRAM,1);
+	node->nodes[0] = node1;
 	return node;
 }
 
@@ -73,7 +81,7 @@ tsnode *phcalc_parse_syntax_lines(tsyntaxctx *ctx, int pos, int *len) {
 			return node;
 		} else if(ctx->tokens[pos+len1].type==TOKEN_ENDLN) {
 			tsnode *node;
-			node2 = phcalc_parse_syntax_lines(ctx,pos+len1+1,&len1);
+			node2 = phcalc_parse_syntax_lines(ctx,pos+len1+1,&len2);
 			if(node2==0){
 				node	= new_snode2(SNODE_LINES,1);
 				node->nodes[0] = node1;
@@ -84,9 +92,9 @@ tsnode *phcalc_parse_syntax_lines(tsyntaxctx *ctx, int pos, int *len) {
 			}
 			return node;
 		}
+		phcalc_parse_newerror(&ctx->err,ctx->tokens[pos+len1].line,ctx->tokens[pos+len1].pos,0,"Unexpected token",0);
 		return 0;
 	}
-	return 0;
 }
 
 tsnode *phcalc_parse_syntax_expr1(tsyntaxctx *ctx, int pos, int *len) {
@@ -95,8 +103,10 @@ tsnode *phcalc_parse_syntax_expr1(tsyntaxctx *ctx, int pos, int *len) {
 	node1 = phcalc_parse_syntax_expr2(ctx,pos,&len1);
 	if(node1==0) return 0;
 	if( ctx->tokens[pos+len1].type==TOKEN_ASSIGN ){
-		tsnode *node	= new_snode2(SNODE_EXPR2,2);
+		tsnode *node;
 		node2 = phcalc_parse_syntax_expr2(ctx,pos+len1+1,&len2);
+		if(node2==0) return 0;
+		node = new_snode2(SNODE_EXPR1,2);
 		node->nodes[0]	= node1;
 		node->nodes[1]	= node2;
 		node->token		= &ctx->tokens[pos+len1];
@@ -113,8 +123,10 @@ tsnode *phcalc_parse_syntax_expr2(tsyntaxctx *ctx, int pos, int *len) {
 	node1 = phcalc_parse_syntax_expr3(ctx,pos,&len1);
 	if(node1==0) return 0;
 	while( ctx->tokens[pos+len1].type==TOKEN_PLUS || ctx->tokens[pos+len1].type==TOKEN_MINUS ){
-		tsnode *node	= new_snode2(SNODE_EXPR2,2);
+		tsnode *node;
 		node2 = phcalc_parse_syntax_expr3(ctx,pos+len1+1,&len2);
+		if(node2==0) return 0;
+		node = new_snode2(SNODE_EXPR2,2);
 		node->nodes[0]	= node1;
 		node->nodes[1]	= node2;
 		node->token		= &ctx->tokens[pos+len1];
@@ -129,9 +141,12 @@ tsnode *phcalc_parse_syntax_expr3(tsyntaxctx *ctx, int pos, int *len) {
 	int len1, len2;
 	tsnode *node1, *node2;
 	node1 = phcalc_parse_syntax_name(ctx,pos,&len1);
+	if(node1==0) return 0;
 	while( ctx->tokens[pos+1].type==TOKEN_ASTER || ctx->tokens[pos+1].type==TOKEN_SLASH ){
-		tsnode *node	= new_snode2(SNODE_EXPR3,2);
+		tsnode *node;
 		node2 = phcalc_parse_syntax_name(ctx,pos+len1+1,&len2);
+		if(node2==0) return 0;
+		node = new_snode2(SNODE_EXPR3,2);
 		node->nodes[0]	= node1;
 		node->nodes[1]	= node2;
 		node->token		= &ctx->tokens[pos+len1];
@@ -155,5 +170,6 @@ tsnode *phcalc_parse_syntax_name(tsyntaxctx *ctx, int pos, int *len) {
 		*len = len1 + 2;
 		return node;
 	}
+	phcalc_parse_newerror(&ctx->err,ctx->tokens[pos].line,ctx->tokens[pos].pos,0,"Unexpected token",0);
 	return 0;
 }

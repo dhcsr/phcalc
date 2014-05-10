@@ -37,9 +37,17 @@ typedef enum _tsnodetype {
 	SNODE_EXPR3
 } tsnodetype;
 
+typedef struct _tparseerr {
+	int line, pos;
+	int code;
+	const char *desc;
+	char buf[32];
+} tparseerr;
+
 typedef struct _ttoken {
 	ttokentype type;
 	char *str;
+	int line, pos;
 } ttoken;
 
 //typedef struct _tsnodeexpr {
@@ -59,12 +67,16 @@ typedef struct _tsnode {
 typedef struct _tsyntaxctx {
 	ttoken *tokens;
 	int tokens_len;
+	tparseerr err;
 } tsyntaxctx;
 
-int phcalc_parse_lexic(FILE *fd, ttoken **data, int *len, char *err);
-ttoken new_token(ttokentype type, const char *name);
+void phcalc_parse_newerror(tparseerr *err, int line, int pos, int code, const char *desc, char *buf);
+void phcalc_parse_printerror(FILE *fd, tparseerr *err);
 
-int phcalc_parse_syntax(ttoken *tokens, int tokens_len, tsnode **stree);
+int phcalc_parse_lexic(FILE *fd, ttoken **data, int *len, tparseerr *err);
+ttoken new_token(ttokentype type, const char *name, int line, int pos);
+
+int phcalc_parse_syntax(ttoken *tokens, int tokens_len, tsnode **stree, tparseerr *err);
 tsnode *new_snode(tsnodetype type);
 tsnode *new_snode2(tsnodetype type, int nodes_len);
 tsnode *new_snode_token(ttoken *token);
