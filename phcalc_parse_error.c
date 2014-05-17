@@ -2,6 +2,7 @@
  *         Physics calculator
  *            CSR, 2014
  * http://info.dcsr.ru/projects/phcalc/
+ * https://github.com/dhcsr/phcalc
  *
  * Error handling for parser (phcalc_parse_error.c)
  *

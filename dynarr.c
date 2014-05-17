@@ -1,3 +1,13 @@
+/**************************************
+ *         Physics calculator
+ *            CSR, 2014
+ * http://info.dcsr.ru/projects/phcalc/
+ * https://github.com/dhcsr/phcalc
+ *
+ * Dynamic array: source (dynarr.c)
+ *
+ **************************************/
+
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>

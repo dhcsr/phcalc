@@ -29,6 +29,7 @@ int phcalc_parse_lexic(FILE *fd, ttoken **tokens, int *len, tparseerr *err) {
 	char name[LEX_MAXNAMELEN];
 	int name_p = 0;
 	int token_pos = -1;
+	int number_exp = 0;
 
 	dynarr_create((void**)tokens,sizeof(ttoken));
 
@@ -123,11 +124,21 @@ int phcalc_parse_lexic(FILE *fd, ttoken **tokens, int *len, tparseerr *err) {
 				}
 				break;
 			case TOKEN_NUMBER:
-				if( (c>='0'&&c<='9') || c=='.' ){
+				if( (c>='0'&&c<='9') || c=='.' || c=='~' || c=='\'' || ( number_exp&&( c=='-' || c=='+' ) ) ){
+					number_exp = 0;
+					name[name_p++] = c;
+				} else if( c=='e' ){
+					number_exp = 1;
 					name[name_p++] = c;
 				} else {
+					ttoken token = new_token(TOKEN_NUMBER,name,line,token_pos);
 					name[name_p] = 0;
-					dynarr_add((void**)tokens,new_token(TOKEN_NUMBER,name,line,token_pos));
+					if( !phcalc_parse_number(name,&token.num) ){
+						phcalc_parse_newerror(err,line,pos,0,"Incorrect number",name);
+						*len = dynarr_desable((void**)tokens);
+						return 0;
+					}
+					dynarr_add((void**)tokens,token);
 					state = TOKEN_NEW;
 					fnext = 0;
 				}
@@ -138,6 +149,100 @@ int phcalc_parse_lexic(FILE *fd, ttoken **tokens, int *len, tparseerr *err) {
 	dynarr_add((void**)tokens,new_token(TOKEN_EOF,0,line,pos));
 	*len = dynarr_desable((void**)tokens);
 	return 1;
+}
+
+int phcalc_parse_number_int(const char *str, int *x) {
+	int num = 0;
+	int sign = 1;
+	int pos = 1;
+	if(str[0]=='-')
+		sign = -1;
+	else if(str[0]=='+')
+		sign = 1;
+	else
+		pos --;
+	while( str[pos]>='0' && str[pos]<='9' ){
+		num = num*10 + str[pos] - '0';
+		pos ++;
+	}
+	*x = num * sign;
+	return pos;
+}
+
+
+int phcalc_parse_number_real(const char *str, double *x) {
+	int integer = 0;
+	int frac = 0;
+	int frac_digs = 0;
+	double devisor = 1.0;
+	int pos = 0;
+	int len = phcalc_parse_number_int(str,&integer);
+	if(len==0)
+		return 0;
+	else
+		pos += len;
+	if(str[pos]!='.'){
+		*x = (double) integer;
+		return pos;
+	}
+	pos ++;
+	frac_digs = phcalc_parse_number_int(str+pos,&frac);
+	if(len==0)
+		return 0;
+	else
+		pos += len;
+	for(;frac_digs>0;frac_digs--)
+		devisor *= 0.1;
+	*x = integer + frac*devisor;
+	return pos;
+}
+
+int phcalc_parse_number(const char *str, phcalc_num *num) {
+	int len, pos = 0;
+	num->error = 0.0;
+	len = phcalc_parse_number_real(str,&num->value);
+	if(len==0)
+		return 0;
+	else
+		pos += len;
+	if(str[pos]=='\''){
+		pos ++;
+		len = phcalc_parse_number_real(str+pos,&num->error);
+		if(len==0)
+			return 0;
+		else
+			pos += len;
+	}
+	if(str[pos]=='~'){
+		double relative;
+		pos ++;
+		len = phcalc_parse_number_real(str+pos,&relative);
+		if(len==0)
+			return 0;
+		else
+			pos += len;
+		num->error = num->value * relative;
+	}
+	if(str[pos]=='e'){
+		int exp;
+		double mutiplier = 1.0;
+		pos ++;
+		len = phcalc_parse_number_int(str+pos,&exp);
+		if(len==0)
+			return 0;
+		else
+			pos += len;
+		if(exp>0){
+			for(;exp>0;exp--)
+				mutiplier *= 10.0;
+		} else if(exp<0){
+			for(;exp<0;exp++)
+				mutiplier *= 0.1;
+		}
+		num->value *= mutiplier;
+		num->error *= mutiplier;
+	}
+	return pos;
 }
 
 ttoken new_token(ttokentype type, const char *name, int line, int pos) {

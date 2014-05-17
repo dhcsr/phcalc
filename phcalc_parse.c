@@ -162,7 +162,7 @@ int phcalc_parse_sign(const char *str, phcalc_opertype *oper) {
 	return 0;
 }
 
-int phcalc_parse_number(const char *str, int len, phcalc_num *num) {
+int phcalc_parse_number_old(const char *str, int len, phcalc_num *num) {
 	int i;
 	int marker = 0;
 	char *buf;

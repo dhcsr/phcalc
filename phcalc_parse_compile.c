@@ -34,6 +34,8 @@ int phcalc_parse_compile_line(phcalc_inst inst, tsnode *line, tparseerr *err) {
 		phcalc_expr expr = (phcalc_expr) NEW(struct _phcalc_expr);
 		expr->names = 0;
 		expr->roper = phcalc_parse_compile_oper(inst,expr,line,err);
+		if(expr->roper==0)
+			return 0;
 		return 1;
 	}
 	return 0;
@@ -82,8 +84,16 @@ phcalc_toper *phcalc_parse_compile_oper(phcalc_inst inst, phcalc_expr expr, tsno
 			oper->id		= phcalc_expr_allocname(expr,node->token->str);
 			oper->nargs		= 0;
 			return oper;
+		case TOKEN_NUMBER:
+			// TODO:
+			oper->type		= PHC_OPER_NUM;
+			oper->id		= -1;
+			oper->nargs		= 0;
+			oper->num		= node->token->num;
+			return oper;
 		}
 	}
+	phcalc_parse_newerror(err,node->src_line,-1,0,"Unknown operation",0);
 	FREE(oper);
 	return 0;
 }

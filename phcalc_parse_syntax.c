@@ -2,6 +2,7 @@
  *         Physics calculator
  *            CSR, 2014
  * http://info.dcsr.ru/projects/phcalc/
+ * https://github.com/dhcsr/phcalc
  *
  * Syntaxis analysator source file (phcalc_parse.c)
  *
@@ -110,35 +111,6 @@ tsnode *phcalc_parse_syntax_lines(tsyntaxctx *ctx, int pos, int *len) {
 	node->nodes		= lines;
 	node->nodes_len	= nlines;
 	return node;
-	/*
-	if(ctx->tokens[pos].type==TOKEN_BRSO){
-		return 0;
-	} else {
-		int len1,len2;
-		tsnode *node1,*node2;
-		node1 = phcalc_parse_syntax_expr1(ctx,pos,&len1);
-		if(node1==0) return 0;
-		if(ctx->tokens[pos+len1].type==TOKEN_EOF) {
-			tsnode *node	= new_snode2(SNODE_LINES,1);
-			node->nodes[0] = node1;
-			return node;
-		} else if(ctx->tokens[pos+len1].type==TOKEN_ENDLN) {
-			tsnode *node;
-			node2 = phcalc_parse_syntax_lines(ctx,pos+len1+1,&len2);
-			if(node2==0){
-				node	= new_snode2(SNODE_LINES,1);
-				node->nodes[0] = node1;
-			} else {
-				node	= new_snode2(SNODE_LINES,node2->nodes_len+1);
-				node->nodes[0] = node1;
-				memcpy(node->nodes+1,node2->nodes,sizeof(tsnode*)*node2->nodes_len);
-			}
-			return node;
-		}
-		phcalc_parse_newerror(&ctx->err,ctx->tokens[pos+len1].line,ctx->tokens[pos+len1].pos,0,
-			"Unexpected token",gettokenname(ctx->tokens[pos+len1].type));
-		return 0;
-	} */
 }
 
 tsnode *phcalc_parse_syntax_expr1(tsyntaxctx *ctx, int pos, int *len) {

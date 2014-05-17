@@ -62,6 +62,7 @@ typedef struct _ttoken {
 	ttokentype type;
 	char *str;
 	int line, pos;
+	phcalc_num num;
 } ttoken;
 
 //typedef struct _tsnodeexpr {
@@ -89,6 +90,7 @@ void phcalc_parse_newerror(tparseerr *err, int line, int pos, int code, const ch
 void phcalc_parse_printerror(FILE *fd, tparseerr *err);
 
 int phcalc_parse_lexic(FILE *fd, ttoken **data, int *len, tparseerr *err);
+int phcalc_parse_number(const char *str, phcalc_num *num);
 ttoken new_token(ttokentype type, const char *name, int line, int pos);
 const char *gettokenname(ttokentype token);
 

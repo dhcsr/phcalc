@@ -101,7 +101,6 @@ struct _phcalc_toper {
 	int nargs;
 	int flags;
 	phcalc_toper **args;
-	//char *name;
 	phcalc_num num;
 };
 
