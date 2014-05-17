@@ -2,6 +2,7 @@
  *         Physics calculator
  *            CSR, 2014
  * http://info.dcsr.ru/projects/phcalc/
+ * https://github.com/dhcsr/phcalc
  *
  * Inner header file (phcalc_in.h)
  * This file used only inside of the library

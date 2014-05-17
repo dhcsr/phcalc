@@ -2,6 +2,7 @@
  *         Physics calculator
  *            CSR, 2014
  * http://info.dcsr.ru/projects/phcalc/
+ * https://github.com/dhcsr/phcalc
  *
  * Parsing file functions source file (phcalc_parse.c)
  *
@@ -27,6 +28,7 @@ phcalc_inst phcalc_parsefile(FILE *fd) {
 	tsnode *stree;
 	int len;
 	tparseerr err;
+	phcalc_inst inst;
 	if( !phcalc_parse_lexic(fd,&tokens,&len,&err) ){
 		phcalc_parse_printerror(stderr,&err);
 		return 0;
@@ -35,5 +37,10 @@ phcalc_inst phcalc_parsefile(FILE *fd) {
 		phcalc_parse_printerror(stderr,&err);
 		return 0;
 	}
-	return 0;
+	inst = phcalc_parse_compile_inst(stree,&err);
+	if( inst==0 ){
+		phcalc_parse_printerror(stderr,&err);
+		return 0;
+	}
+	return inst;
 }

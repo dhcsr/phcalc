@@ -57,6 +57,9 @@ int phcalc_parse_lexic(FILE *fd, ttoken **tokens, int *len, tparseerr *err) {
 				case '/':
 					dynarr_add((void**)tokens,new_token(TOKEN_SLASH,0,line,pos));
 					break;
+				case ',':
+					dynarr_add((void**)tokens,new_token(TOKEN_COMMA,0,line,pos));
+					break;
 				case ';':
 					dynarr_add((void**)tokens,new_token(TOKEN_ENDLN,0,line,pos));
 					break;
@@ -147,4 +150,23 @@ ttoken new_token(ttokentype type, const char *name, int line, int pos) {
 	else
 		token.str  = _strdup(name);
 	return token;
+}
+
+const char *gettokenname(ttokentype token) {
+	switch(token){
+	case TOKEN_NAME:			return "NAME";
+	case TOKEN_NUMBER:			return "NUMBER";
+	case TOKEN_PLUS:			return "+";
+	case TOKEN_MINUS:			return "-";
+	case TOKEN_ASTER:			return "*";
+	case TOKEN_SLASH:			return "/";
+	case TOKEN_BRPO:			return "(";
+	case TOKEN_BRPC:			return ")";
+	case TOKEN_BRCO:			return "{";
+	case TOKEN_BRCC:			return "}";
+	case TOKEN_BRSO:			return "[";
+	case TOKEN_BRSC:			return "]";
+	case TOKEN_EOF:				return "EOF";
+	default:					return "";
+	}
 }

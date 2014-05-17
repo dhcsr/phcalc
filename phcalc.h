@@ -2,12 +2,14 @@
  *         Physics calculator
  *            CSR, 2014
  * http://info.dcsr.ru/projects/phcalc/
+ * https://github.com/dhcsr/phcalc
  *
  * Main header file (phcalc.h)
  * This file contains declaration of library functions
  * You need to include it in your project
  * if you're going to use it
  **************************************/
+
 #pragma once
 
 #include <stdio.h>

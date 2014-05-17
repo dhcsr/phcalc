@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <assert.h>
 #include "dynarr.h"
 
 #define SIGN	0xDABABB00
@@ -25,6 +26,7 @@ void dynarr_add(void **arr, ...) {
 	DYNARR_HDR *hdr = (DYNARR_HDR*)(*arr) - 1;
 	va_list ap;
 	va_start(ap,arr);
+	assert(hdr->sign==SIGN);
 	if( hdr->length == hdr->reserved ){
 		DYNARR_HDR *new_hdr;
 		hdr->reserved *= 2;
@@ -38,8 +40,11 @@ void dynarr_add(void **arr, ...) {
 
 int dynarr_desable(void **arr) {
 	DYNARR_HDR *hdr = (DYNARR_HDR*)(*arr) - 1;
-	int length = hdr->length;
-	void *data = malloc(hdr->elsize*length);
+	int length;
+	void *data;
+	assert(hdr->sign==SIGN);
+	length = hdr->length;
+	data = malloc(hdr->elsize*length);
 	memcpy(data,*arr,hdr->elsize*length);
 	*arr = data;
 	free(hdr);
