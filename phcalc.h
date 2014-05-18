@@ -55,6 +55,7 @@ phcalc_inst phcalc_parsefile(FILE *fd);
 
 
 int phcalc_strexpr(phcalc_inst inst, phcalc_expr expr, char *str, int len);
+int phcalc_strobj(phcalc_obj *obj, char *str, int len);
 void phcalc_expr_release(phcalc_inst inst, phcalc_expr expr);
 void phcalc_obj_release(phcalc_inst inst, phcalc_obj obj);
 

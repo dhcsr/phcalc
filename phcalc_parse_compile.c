@@ -29,6 +29,15 @@ phcalc_inst phcalc_parse_compile_inst(tsnode *stree, tparseerr *err) {
 	return inst;
 }
 
+phcalc_expr phcalc_parse_compile_expr(tsnode *stree, tparseerr *err) {
+	phcalc_expr expr = (phcalc_expr) NEW(struct _phcalc_expr);
+	expr->names = 0;
+	expr->roper = phcalc_parse_compile_oper(0,expr,stree,err);
+	if(expr->roper==0)
+		return 0;
+	return expr;
+}
+
 int phcalc_parse_compile_line(phcalc_inst inst, tsnode *line, tparseerr *err) {
 	if( line->type >= SNODE_EXPR1 && line->type <= SNODE_EXPR3 ){
 		phcalc_expr expr = (phcalc_expr) NEW(struct _phcalc_expr);
@@ -36,6 +45,7 @@ int phcalc_parse_compile_line(phcalc_inst inst, tsnode *line, tparseerr *err) {
 		expr->roper = phcalc_parse_compile_oper(inst,expr,line,err);
 		if(expr->roper==0)
 			return 0;
+		phcalc_query(inst,expr);
 		return 1;
 	}
 	return 0;
@@ -85,7 +95,6 @@ phcalc_toper *phcalc_parse_compile_oper(phcalc_inst inst, phcalc_expr expr, tsno
 			oper->nargs		= 0;
 			return oper;
 		case TOKEN_NUMBER:
-			// TODO:
 			oper->type		= PHC_OPER_NUM;
 			oper->id		= -1;
 			oper->nargs		= 0;

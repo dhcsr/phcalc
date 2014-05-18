@@ -17,14 +17,15 @@
 
 #include "phcalc.h"
 #include "phcalc_in.h"
-#include "dynarr.h"
 #include "phcalc_parse.h"
 
+#include "dynarr.h"
 #define LEX_MAXNAMELEN	256
 
-int phcalc_parse_lexic(FILE *fd, ttoken **tokens, int *len, tparseerr *err) {
+int phcalc_parse_lexic(const char *src, ttoken **tokens, int *len, tparseerr *err) {
 	int line = 0, pos = -1;
 	ttokentype state = TOKEN_NEW;
+	int src_pos = 0;
 
 	char name[LEX_MAXNAMELEN];
 	int name_p = 0;
@@ -34,11 +35,9 @@ int phcalc_parse_lexic(FILE *fd, ttoken **tokens, int *len, tparseerr *err) {
 	dynarr_create((void**)tokens,sizeof(ttoken));
 
 	for(;;){
-		char c = fgetc(fd);
+		char c = src[src_pos++];
 		int fnext = 0;
 		pos ++;
-		if(feof(fd))
-			break;
 		while(!fnext){
 			fnext = 1;
 			switch(state){
@@ -86,15 +85,16 @@ int phcalc_parse_lexic(FILE *fd, ttoken **tokens, int *len, tparseerr *err) {
 					dynarr_add((void**)tokens,new_token(TOKEN_BRCC,0,line,pos));
 					break;
 				default:
-					if( (c>'a'&&c<'z') || (c>'A'&&c<'Z') || c=='_' ){
+					if( (c>='a'&&c<='z') || (c>='A'&&c<='Z') || c=='_' ){
 						state = TOKEN_NAME;
 						fnext = 0;
 					} else if( isspace(c) ){
 						state = TOKEN_SPACE;
 						fnext = 0;
-					} else if( (c>'0'&&c<'9') ){
+					} else if( (c>='0'&&c<='9') ){
 						state = TOKEN_NUMBER;
 						fnext = 0;
+					} else if(c=='\0') {
 					} else {
 						char buf[2] = { c, 0 };
 						phcalc_parse_newerror(err,line,pos,0,"Unknown symbol",buf);
@@ -114,7 +114,7 @@ int phcalc_parse_lexic(FILE *fd, ttoken **tokens, int *len, tparseerr *err) {
 				}
 				break;
 			case TOKEN_NAME:
-				if( (c>'a'&&c<'z') || (c>'A'&&c<'Z') || (c>'0'&&c<'9') || c=='_' ){
+				if( (c>='a'&&c<='z') || (c>='A'&&c<='Z') || (c>='0'&&c<='9') || c=='_' ){
 					name[name_p++] = c;
 				} else {
 					name[name_p] = 0;
@@ -145,6 +145,8 @@ int phcalc_parse_lexic(FILE *fd, ttoken **tokens, int *len, tparseerr *err) {
 				break;
 			}
 		}
+		if(c==0)
+			break;
 	}
 	dynarr_add((void**)tokens,new_token(TOKEN_EOF,0,line,pos));
 	*len = dynarr_desable((void**)tokens);
@@ -190,7 +192,7 @@ int phcalc_parse_number_real(const char *str, double *x) {
 	if(len==0)
 		return 0;
 	else
-		pos += len;
+		pos += frac_digs;
 	for(;frac_digs>0;frac_digs--)
 		devisor *= 0.1;
 	*x = integer + frac*devisor;
@@ -253,7 +255,7 @@ ttoken new_token(ttokentype type, const char *name, int line, int pos) {
 	if(name==0)
 		token.str = 0;
 	else
-		token.str  = _strdup(name);
+		token.str = _strdup(name);
 	return token;
 }
 

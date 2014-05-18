@@ -80,3 +80,12 @@ int phcalc_getopersign(char *str, phcalc_opertype opertype) {
 	}
 	return 0;
 }
+
+int phcalc_strobj(phcalc_obj *obj, char *str, int len) {
+	if(obj->type==PHC_OBJ_NUM){
+		sprintf(str,"%f'%f",(float)obj->ref.num->value,(float)obj->ref.num->error);
+		return 1;
+	}
+	str[0] = 0;
+	return 0;
+}

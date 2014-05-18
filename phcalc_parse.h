@@ -89,12 +89,13 @@ typedef struct _tsyntaxctx {
 void phcalc_parse_newerror(tparseerr *err, int line, int pos, int code, const char *desc, const char *buf);
 void phcalc_parse_printerror(FILE *fd, tparseerr *err);
 
-int phcalc_parse_lexic(FILE *fd, ttoken **data, int *len, tparseerr *err);
+int phcalc_parse_lexic(const char *src, ttoken **data, int *len, tparseerr *err);
 int phcalc_parse_number(const char *str, phcalc_num *num);
 ttoken new_token(ttokentype type, const char *name, int line, int pos);
 const char *gettokenname(ttokentype token);
 
 int phcalc_parse_syntax(ttoken *tokens, int tokens_len, tsnode **stree, tparseerr *err);
+int phcalc_parse_syntax_expr(ttoken *tokens, int tokens_len, tsnode **stree, tparseerr *err);
 tsnode *new_snode(tsnodetype type, int src_line);
 tsnode *new_snode2(tsnodetype type, int nodes_len, int src_line);
 tsnode *new_snode_token(ttoken *token);
@@ -107,6 +108,7 @@ tsnode *phcalc_parse_syntax_name(tsyntaxctx *ctx, int pos, int *len);
 tsnode *phcalc_parse_syntax_list(tsyntaxctx *ctx, int pos, int *len);
 
 phcalc_inst phcalc_parse_compile_inst(tsnode *stree, tparseerr *err);
+phcalc_expr phcalc_parse_compile_expr(tsnode *stree, tparseerr *err);
 int phcalc_parse_compile_line(phcalc_inst inst, tsnode *line, tparseerr *err);
 int phcalc_parse_compile_lines(phcalc_inst inst, tsnode *lines, tparseerr *err);
 phcalc_toper *phcalc_parse_compile_oper(phcalc_inst inst, phcalc_expr expr, tsnode *node, tparseerr *err);
