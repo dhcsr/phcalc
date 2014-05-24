@@ -263,6 +263,10 @@ tsnode *phcalc_parse_syntax_name(tsyntaxctx *ctx, int pos, int *len) {
 		*len = len1 + 2;
 		return node;
 	}
+	if(ctx->tokens[pos].type==TOKEN_MINUS) {
+		// TODO:
+		assert(0);
+	}
 	phcalc_parse_newerror(&ctx->err,ctx->tokens[pos].line,ctx->tokens[pos].pos,0,
 		"Unexpected token",gettokenname(ctx->tokens[pos].type));
 	return 0;

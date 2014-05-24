@@ -52,6 +52,10 @@ void test_prim_eval() {
 	phcalc_inst calc = phcalc_create_inst();
 	phcalc_expr e1 = phcalc_parse("(1+2)*3/(3+1)");
 	phcalc_expr e2 = phcalc_parse("{1,2}+{3,4}");
+	phcalc_expr e3 = phcalc_parse("f(x)=x*x");
+	phcalc_expr e4 = phcalc_parse("f(2)");
 	phcalc_obj r1;
 	phcalc_eval(calc,e1,&r1);
+	phcalc_query(calc,e3);
+	phcalc_eval(calc,e4,&r1);
 }

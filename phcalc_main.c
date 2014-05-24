@@ -23,7 +23,14 @@ phcalc_inst phcalc_create_inst() {
 }
 
 void phcalc_destroy_inst(phcalc_inst inst) {
-	free(inst);
+	phcalc_inst_def *def = inst->defs;
+	while( def!=0 ){
+		phcalc_inst_def *next = def->next;
+		phcalc_release_obj(inst,&def->obj);
+		FREE(def);
+		def = next;
+	}
+	FREE(inst);
 }
 
 void phcalc_expr_release(phcalc_inst inst, phcalc_expr expr) {
@@ -57,12 +64,22 @@ phcalc_obj phcalc_clone_obj(phcalc_inst inst, phcalc_obj *src) {
 		for(i=0; i<newobj.ref.vect.len; i++)
 			newobj.ref.vect.data[i] = phcalc_clone_obj(inst,&newobj.ref.vect.data[i]);
 		break;
+	case PHC_OBJ_EXPR:
+		newobj.ref.expr = phcalc_copyexpr(src->ref.expr,0);
+		break;
 	}
 	return newobj;
 }
 
 void phcalc_release_obj(phcalc_inst inst, phcalc_obj *obj) {
 	// TODO:
+}
+
+phcalc_num phcalc_num_new(double val, double err) {
+	phcalc_num num;
+	num.value = val;
+	num.error = err;
+	return num;
 }
 
 int phcalc_query(phcalc_inst inst, phcalc_expr expr) {
@@ -91,6 +108,8 @@ phcalc_expr phcalc_copyexpr(phcalc_expr expr, phcalc_toper *oper) {
 	// TODO: copy only used names if oper!=expr->roper
 	int i;
 	phcalc_expr nexpr = NEW(struct _phcalc_expr);
+	if(oper==0)
+		oper = expr->roper;
 	if(expr->names!=0){
 		for(i=0; expr->names[i]; i++){}
 		nexpr->names = NEWS(char*,i+1);
@@ -132,19 +151,27 @@ int phcalc_getoperpriority(phcalc_opertype opertype) {
 }
 
 void phcalc_adddef(phcalc_inst inst, char *name, phcalc_expr expr) {
-	phcalc_inst_def *def = (phcalc_inst_def*) malloc(sizeof(phcalc_inst_def));
+	phcalc_inst_def *def = NEW(phcalc_inst_def);
 	def->name	= name;
-	def->expr	= phcalc_copyexpr(expr,expr->roper);
-	//def->type	= 
+	def->obj.type		= PHC_OBJ_EXPR;
+	def->obj.ref.expr	= phcalc_copyexpr(expr,expr->roper);
 	def->next	= inst->defs;
 	inst->defs	= def;
 }
 
-phcalc_expr phcalc_getdef(phcalc_inst inst, const char *name) {
+void phcalc_adddef_obj_nocopy(phcalc_inst inst, char *name, phcalc_obj obj) {
+	phcalc_inst_def *def = NEW(phcalc_inst_def);
+	def->name	= name;
+	def->obj	= obj;
+	def->next	= inst->defs;
+	inst->defs	= def;
+}
+
+phcalc_obj *phcalc_getdef(phcalc_inst inst, const char *name) {
 	phcalc_inst_def *iter = inst->defs;
 	while(iter!=0){
 		if( strcmp(iter->name,name)==0 )
-			return iter->expr;
+			return &iter->obj;
 		iter = iter->next;
 	}
 	return 0;

@@ -41,7 +41,7 @@ struct _phcalc_obj {
 	union {
 		phcalc_num num;
 		phcalc_vect vect;
-		//phcalc_expr expr;
+		phcalc_expr expr;
 	} ref;
 };
 
@@ -68,6 +68,8 @@ void phcalc_expr_release(phcalc_inst inst, phcalc_expr expr);
 phcalc_obj phcalc_clone_obj(phcalc_inst inst, phcalc_obj *src);
 void phcalc_release_obj(phcalc_inst inst, phcalc_obj *obj);
 void phcalc_release_objs(phcalc_inst inst, phcalc_obj *obj, int count);
+
+phcalc_num phcalc_num_new(double val, double err);
 
 /*
 Program sample:

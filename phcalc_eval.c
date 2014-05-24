@@ -16,24 +16,36 @@ int phcalc_execoper2(phcalc_evalctx *ctx, phcalc_toper *oper, phcalc_obj *args, 
 int phcalc_getargtypes(phcalc_evalctx *ctx, phcalc_toper *toper, phcalc_typedef *types);
 int phcalc_comparetypes_map(phcalc_evalctx *ctx, phcalc_obj *arg, phcalc_typedef *type);
 
-int phcalc_eval2(phcalc_inst inst, phcalc_expr expr, phcalc_toper *roper, phcalc_obj *res);
+int phcalc_eval2(phcalc_evalctx *ctx, phcalc_expr expr, phcalc_toper *roper, phcalc_obj *res);
+int phcalc_eval_func(phcalc_evalctx *ctx, phcalc_expr expr, phcalc_obj *arg, phcalc_obj *res);
+
+int phcalc_vector_depth(phcalc_vect vect);
 
 int phcalc_eval(phcalc_inst inst, phcalc_expr expr, phcalc_obj *res) {
-	return phcalc_eval2(inst,expr,expr->roper,res);
+	phcalc_evalctx *ctx = NEW(phcalc_evalctx);
+	int ret;
+	ctx->prev = 0;
+	ctx->inst = inst;
+	ctx->expr = 0;
+	ret = phcalc_eval2(ctx,expr,expr->roper,res);
+	FREE(ctx);
+	return ret;
 }
 
-int phcalc_eval2(phcalc_inst inst, phcalc_expr expr, phcalc_toper *roper, phcalc_obj *res) {
+int phcalc_eval2(phcalc_evalctx *ctx, phcalc_expr expr, phcalc_toper *roper, phcalc_obj *res) {
 	int ret;
-	phcalc_evalctx *ctx = NEW(phcalc_evalctx);
-	ctx->inst = inst;
-	ctx->expr = expr;
-	ret = phcalc_execoper(ctx,roper,res);
-	FREE(ctx);
+	phcalc_evalctx *nctx = NEW(phcalc_evalctx);
+	nctx->prev = ctx;
+	nctx->inst = ctx->inst;
+	nctx->expr = expr;
+	ret = phcalc_execoper(nctx,roper,res);
+	FREE(nctx);
 	return ret;
 }
 
 int phcalc_execoper(phcalc_evalctx *ctx, phcalc_toper *oper, phcalc_obj *res) {
 	int i;
+	int ret;
 	phcalc_typedef *types;
 	phcalc_obj *args = NEWS(phcalc_obj,oper->nargs);
 	for(i=0; i<oper->nargs; i++){
@@ -44,12 +56,12 @@ int phcalc_execoper(phcalc_evalctx *ctx, phcalc_toper *oper, phcalc_obj *res) {
 	}
 	types = NEWS(phcalc_typedef,oper->nargs);
 	phcalc_getargtypes(ctx,oper,types);
-	phcalc_execoper1(ctx,oper,args,types,res);
+	ret = phcalc_execoper1(ctx,oper,args,types,res);
 	for(i=0; i<oper->nargs; i++)
 		phcalc_release_obj(ctx->inst,&args[i]);
 	FREE(args);
 	FREE(types);
-	return 1;
+	return ret;
 }
 
 int phcalc_execoper1(phcalc_evalctx *ctx, phcalc_toper *oper, phcalc_obj *args, phcalc_typedef *types, phcalc_obj *res) {
@@ -108,7 +120,7 @@ int phcalc_execoper2(phcalc_evalctx *ctx, phcalc_toper *oper, phcalc_obj *args, 
 		res->ref.num = oper->num;
 		return 1; }
 	case PHC_OPER_VAR: {
-		phcalc_expr def = phcalc_getdef(ctx->inst,ctx->expr->names[oper->id]);
+		phcalc_obj *def = phcalc_getdef(ctx->inst,ctx->expr->names[oper->id]);
 		if(def==0){
 			phcalc_num num;
 			if( !phcalc_const(ctx->expr->names[oper->id],&num) )
@@ -117,11 +129,17 @@ int phcalc_execoper2(phcalc_evalctx *ctx, phcalc_toper *oper, phcalc_obj *args, 
 			res->ref.num	= num;
 			return 1;
 		}
-		if(def->roper->args[0]->type!=PHC_OPER_VAR)
-			return 0;
-		if( !phcalc_eval2(ctx->inst,def,def->roper->args[1],res) )
-			return 0;
-		return 1; }
+		if( def->type==PHC_OBJ_NUM || def->type==PHC_OBJ_VECT ){
+			*res = phcalc_clone_obj(ctx->inst,def);
+			return 1;
+		} else if( def->type==PHC_OBJ_EXPR ){
+			phcalc_expr dexpr = def->ref.expr;
+			if(dexpr->roper->args[0]->type!=PHC_OPER_VAR)
+				return 0;
+			if( !phcalc_eval2(ctx,dexpr,dexpr->roper->args[1],res) )
+				return 0;
+			return 1; }
+		return 0; }
 	case PHC_OPER_VCT:
 		res->type = PHC_OBJ_VECT;
 		res->ref.vect.len	= oper->nargs;
@@ -142,12 +160,42 @@ int phcalc_execoper2(phcalc_evalctx *ctx, phcalc_toper *oper, phcalc_obj *args, 
 			return 1;
 		}
 		break;
+	case PHC_OPER_FNC: {
+		phcalc_obj *def = phcalc_getdef(ctx->inst,ctx->expr->names[oper->id]);
+		if(def==0){
+			if( !phcalc_mfunc(ctx,ctx->expr->names[oper->id],args,oper->nargs,res) )
+				return 0;
+			return 1;
+		}
+		if( def->type==PHC_OBJ_NUM || def->type==PHC_OBJ_VECT ){
+			*res = phcalc_clone_obj(ctx->inst,def);
+			return 1;
+		} else if( def->type==PHC_OBJ_EXPR ){
+			phcalc_expr dexpr = def->ref.expr;
+			if(dexpr->roper->args[0]->type!=PHC_OPER_FNC)
+				return 0;
+			if( dexpr->roper->args[0]->nargs != oper->nargs )
+				return 0;
+			if( !phcalc_eval_func(ctx,dexpr,args,res) )
+				return 0;
+			return 1; }
+		return 0; }
 	}
 	return 0;
 }
 
 int phcalc_getargtypes(phcalc_evalctx *ctx, phcalc_toper *oper, phcalc_typedef *types) {
 	int i;
+	if(oper->type==PHC_OPER_FNC){
+		const char *name = ctx->expr->names[oper->id];
+		if( strcmp(name,"Average")==0 ){
+			if(oper->nargs!=1)
+				return 0;
+			types[0].type = PHC_OBJ_VECT;
+			types[0].vect_depth = 1;
+			return 1;
+		}
+	}
 	for(i=0; i<oper->nargs; i++)
 		types[i].type = PHC_OBJ_NUM;
 	return 1;
@@ -158,6 +206,16 @@ int phcalc_comparetypes_map(phcalc_evalctx *ctx, phcalc_obj *arg, phcalc_typedef
 		return 0;
 	if( arg->type==PHC_OBJ_VECT && type->type==PHC_OBJ_NUM )
 		return 1;
+	if( arg->type==PHC_OBJ_VECT && type->type==PHC_OBJ_VECT ) {
+		int depth = phcalc_vector_depth(arg->ref.vect);
+		if(depth<=-1)
+			return -1;
+		if( depth == type->vect_depth )
+			return 0;
+		if( depth > type->vect_depth )
+			return 1;
+		return -1;
+	}
 	return -1;
 }
 
@@ -176,4 +234,45 @@ phcalc_num phcalc_execoper_s2(phcalc_opertype opertype, phcalc_num arg1, phcalc_
 	}
 	assert(0);
 	return phcalc_add(arg1,arg2);	// ???
+}
+
+int phcalc_eval_func(phcalc_evalctx *ctx, phcalc_expr expr, phcalc_obj *args, phcalc_obj *res) {
+	int i;
+	int nargs = expr->roper->args[0]->nargs;
+	phcalc_toper **alist = expr->roper->args[0]->args;
+	phcalc_inst inst = phcalc_create_inst();
+	phcalc_evalctx *nctx = NEW(phcalc_evalctx);
+	nctx->prev	= ctx;
+	nctx->inst	= inst;
+	nctx->expr	= expr;
+	for(i=0; i<nargs; i++){
+		if( alist[i]->type!=PHC_OPER_VAR || alist[i]->id==-1 ){
+			FREE(nctx);
+			phcalc_destroy_inst(inst);
+			return 0;
+		}
+		phcalc_adddef_obj_nocopy( inst, expr->names[alist[i]->id], args[i] );
+	}
+	phcalc_eval2(nctx,expr,expr->roper->args[1],res);
+	FREE(nctx);
+	phcalc_destroy_inst(inst);
+	return 1;
+}
+
+int phcalc_vector_depth(phcalc_vect vect) {
+	int i;
+	int d, depth = -1;
+	for(i=0; i<vect.len; i++){
+		if( vect.data[i].type == PHC_OBJ_NUM )
+			d = 1;
+		else if( vect.data[i].type == PHC_OBJ_VECT )
+			d = phcalc_vector_depth(vect.data[i].ref.vect);
+		else
+			return -1;
+		if(depth!=-1 && d!=depth)
+			return -1;
+		else
+			depth = d;
+	}
+	return depth;
 }

@@ -37,9 +37,12 @@ int main_routine() {
 			phcalc_expr e = phcalc_parse(arg);
 			phcalc_obj r;
 			if(e!=0){
-				phcalc_eval(calc,e,&r);
-				phcalc_strobj(&r,buf,512);
-				printf("%s\n",buf);
+				if( phcalc_eval(calc,e,&r) ){
+					phcalc_strobj(&r,buf,512);
+					printf("%s\n",buf);
+				} else {
+					printf("Error\n");
+				}
 			}
 		} else if( strcmp(buf,"exit")==0 ){
 			break;

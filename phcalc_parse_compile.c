@@ -125,6 +125,23 @@ phcalc_toper *phcalc_parse_compile_oper(phcalc_inst inst, phcalc_expr expr, tsno
 		tsnode *list = node->nodes[0];
 		int i;
 		oper->type		= PHC_OPER_VCT;
+		oper->id		= -1;
+		oper->nargs		= list->nodes_len;
+		oper->args		= NEWS(phcalc_toper*,oper->nargs);
+		for(i=0; i<oper->nargs; i++){
+			oper->args[i] = phcalc_parse_compile_oper(inst,expr,list->nodes[i],err);
+			if(oper->args[i]==0){
+				FREE(oper->args);
+				FREE(oper);
+				return 0;
+			}
+		}
+		return oper;
+	} else if( node->type == SNODE_FUNC ){
+		tsnode *list = node->nodes[0];
+		int i;
+		oper->type		= PHC_OPER_FNC;
+		oper->id		= phcalc_expr_allocname(expr,node->token->str);
 		oper->nargs		= list->nodes_len;
 		oper->args		= NEWS(phcalc_toper*,oper->nargs);
 		for(i=0; i<oper->nargs; i++){

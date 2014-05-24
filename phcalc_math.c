@@ -1,6 +1,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <string.h>
+#include <assert.h>
 
 #include "phcalc.h"
 #include "phcalc_in.h"
@@ -52,6 +53,28 @@ int phcalc_const(const char *name, phcalc_num *res) {
 
 }
 
+int phcalc_mfunc(phcalc_evalctx *ctx, const char *name, phcalc_obj *args, int nargs, phcalc_obj *res) {
+	int ret_num = 1;
+	phcalc_num fr;
+	if( strcmp(name,"Abs")==0 ){
+		assert(args[0].type==PHC_OBJ_NUM);
+		fr = phcalc_abs(args[0].ref.num);
+	} else if( strcmp(name,"Sqrt")==0 ){
+		assert(args[0].type==PHC_OBJ_NUM);
+		fr = phcalc_sqrt(args[0].ref.num);
+	} else  if( strcmp(name,"Average")==0 ){
+		assert(args[0].type==PHC_OBJ_VECT);
+		assert( phcalc_average(&fr,args[0].ref.vect) );
+	} else
+		ret_num = 0;
+	if(ret_num){
+		res->type = PHC_OBJ_NUM;
+		res->ref.num = fr;
+		return 1;
+	}
+	return 0;
+}
+
 phcalc_num phcalc_add(phcalc_num x, phcalc_num y) {
 	phcalc_num z;
 	z.value = x.value + y.value;
@@ -100,4 +123,16 @@ phcalc_num phcalc_sqrt(phcalc_num x) {
 	z.value = sqrt( x.value );
 	z.error = z.value*( x.error/x.value );
 	return z;
+}
+
+int phcalc_average(phcalc_num *res, phcalc_vect vector) {
+	int i;
+	phcalc_num sum = { 0, 0 };
+	for(i=0; i<vector.len; i++){
+		if(vector.data[i].type!=PHC_OBJ_NUM)
+			return 0;
+		sum = phcalc_add(sum,vector.data[i].ref.num);
+	}
+	*res = phcalc_div( sum, phcalc_num_new(vector.len,0) );
+	return 1;
 }
