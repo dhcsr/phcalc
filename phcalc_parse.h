@@ -14,11 +14,12 @@
 typedef enum _ttokentype {
 	TOKEN_NAME,
 	TOKEN_NUMBER,
-	TOKEN_ASSIGN,
-	TOKEN_PLUS,
-	TOKEN_MINUS,
-	TOKEN_ASTER,
-	TOKEN_SLASH,
+	TOKEN_ASSIGN,	// =
+	TOKEN_PLUS,		// +
+	TOKEN_MINUS,	// -
+	TOKEN_ASTER,	// *
+	TOKEN_SLASH,	// /
+	TOKEN_CARET,	// ^
 	TOKEN_COMMA,	// ,
 	TOKEN_ENDLN,	// ;
 	TOKEN_BRPO,		// (
@@ -44,11 +45,13 @@ typedef enum _tsnodetype {
 	SNODE_TOKEN,
 	SNODE_PROGRAM,
 	SNODE_LINES,
-	SNODE_EXPR1,
-	SNODE_EXPR2,
-	SNODE_EXPR3,
+	SNODE_OPER,
+	//SNODE_EXPR1,
+	//SNODE_EXPR2,
+	//SNODE_EXPR3,
 	SNODE_LIST,
-	SNODE_FUNC
+	SNODE_FUNC,
+	SNODE_VECTOR
 } tsnodetype;
 
 typedef struct _tparseerr {
@@ -104,6 +107,7 @@ tsnode *phcalc_parse_syntax_lines(tsyntaxctx *ctx, int pos, int *len);
 tsnode *phcalc_parse_syntax_expr1(tsyntaxctx *ctx, int pos, int *len);		// =
 tsnode *phcalc_parse_syntax_expr2(tsyntaxctx *ctx, int pos, int *len);		// + -
 tsnode *phcalc_parse_syntax_expr3(tsyntaxctx *ctx, int pos, int *len);		// * /
+tsnode *phcalc_parse_syntax_expr4(tsyntaxctx *ctx, int pos, int *len);		// ^
 tsnode *phcalc_parse_syntax_name(tsyntaxctx *ctx, int pos, int *len);
 tsnode *phcalc_parse_syntax_list(tsyntaxctx *ctx, int pos, int *len);
 

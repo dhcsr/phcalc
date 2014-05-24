@@ -57,6 +57,9 @@ int phcalc_parse_lexic(const char *src, ttoken **tokens, int *len, tparseerr *er
 				case '/':
 					dynarr_add((void**)tokens,new_token(TOKEN_SLASH,0,line,pos));
 					break;
+				case '^':
+					dynarr_add((void**)tokens,new_token(TOKEN_CARET,0,line,pos));
+					break;
 				case ',':
 					dynarr_add((void**)tokens,new_token(TOKEN_COMMA,0,line,pos));
 					break;

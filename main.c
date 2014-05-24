@@ -6,14 +6,10 @@
 #include "phcalc.h"
 
 int main_routine();
+void test_1();
 
 int main(int argc, char *argv[]){
-	/*FILE *fd = fopen("prog.txt","rt");
-	phcalc_inst calc = phcalc_parsefile(fd);
-	phcalc_expr e1 = phcalc_parse("x");
-	phcalc_obj r1;
-	phcalc_eval(calc,e1,&r1);
-	return 0;*/
+	test_1();
 	main_routine();
 }
 
@@ -40,12 +36,15 @@ int main_routine() {
 		} else if( strcmp(buf,"eval")==0 && arg!=0 ){
 			phcalc_expr e = phcalc_parse(arg);
 			phcalc_obj r;
-			phcalc_eval(calc,e,&r);
-			phcalc_strobj(&r,buf,512);
-			printf("%s\n",buf);
+			if(e!=0){
+				phcalc_eval(calc,e,&r);
+				phcalc_strobj(&r,buf,512);
+				printf("%s\n",buf);
+			}
+		} else if( strcmp(buf,"exit")==0 ){
+			break;
 		} else
 			printf("Unknown command\n");
-		//puts(buf);
 	}
 	phcalc_destroy_inst(calc);
 	return 0;

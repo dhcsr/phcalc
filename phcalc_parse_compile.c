@@ -10,6 +10,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #include "phcalc.h"
 #include "phcalc_in.h"
@@ -39,7 +40,7 @@ phcalc_expr phcalc_parse_compile_expr(tsnode *stree, tparseerr *err) {
 }
 
 int phcalc_parse_compile_line(phcalc_inst inst, tsnode *line, tparseerr *err) {
-	if( line->type >= SNODE_EXPR1 && line->type <= SNODE_EXPR3 ){
+	if( line->type == SNODE_OPER ){
 		phcalc_expr expr = (phcalc_expr) NEW(struct _phcalc_expr);
 		expr->names = 0;
 		expr->roper = phcalc_parse_compile_oper(inst,expr,line,err);
@@ -48,6 +49,7 @@ int phcalc_parse_compile_line(phcalc_inst inst, tsnode *line, tparseerr *err) {
 		phcalc_query(inst,expr);
 		return 1;
 	}
+	assert(0);
 	return 0;
 }
 
@@ -65,7 +67,7 @@ int phcalc_parse_compile_lines(phcalc_inst inst, tsnode *lines, tparseerr *err) 
 
 phcalc_toper *phcalc_parse_compile_oper(phcalc_inst inst, phcalc_expr expr, tsnode *node, tparseerr *err) {
 	phcalc_toper *oper = NEW(phcalc_toper);
-	if( node->type >= SNODE_EXPR1 && node->type <= SNODE_EXPR3 ){
+	if( node->type == SNODE_OPER ){
 		switch(node->token->type){
 		case TOKEN_ASSIGN:
 			if( p_new_oper_p2( oper, PHC_OPER_DEF,
@@ -79,8 +81,26 @@ phcalc_toper *phcalc_parse_compile_oper(phcalc_inst inst, phcalc_expr expr, tsno
 				phcalc_parse_compile_oper(inst,expr,node->nodes[1],err) ) )
 					return oper;
 			break;
+		case TOKEN_MINUS:
+			if( p_new_oper_p2( oper, PHC_OPER_SUB,
+				phcalc_parse_compile_oper(inst,expr,node->nodes[0],err),
+				phcalc_parse_compile_oper(inst,expr,node->nodes[1],err) ) )
+					return oper;
+			break;
 		case TOKEN_ASTER:
 			if( p_new_oper_p2( oper, PHC_OPER_MUL,
+				phcalc_parse_compile_oper(inst,expr,node->nodes[0],err),
+				phcalc_parse_compile_oper(inst,expr,node->nodes[1],err) ) )
+					return oper;
+			break;
+		case TOKEN_SLASH:
+			if( p_new_oper_p2( oper, PHC_OPER_DIV,
+				phcalc_parse_compile_oper(inst,expr,node->nodes[0],err),
+				phcalc_parse_compile_oper(inst,expr,node->nodes[1],err) ) )
+					return oper;
+			break;
+		case TOKEN_CARET:
+			if( p_new_oper_p2( oper, PHC_OPER_POW,
 				phcalc_parse_compile_oper(inst,expr,node->nodes[0],err),
 				phcalc_parse_compile_oper(inst,expr,node->nodes[1],err) ) )
 					return oper;
@@ -101,6 +121,21 @@ phcalc_toper *phcalc_parse_compile_oper(phcalc_inst inst, phcalc_expr expr, tsno
 			oper->num		= node->token->num;
 			return oper;
 		}
+	} else if( node->type == SNODE_VECTOR ){
+		tsnode *list = node->nodes[0];
+		int i;
+		oper->type		= PHC_OPER_VCT;
+		oper->nargs		= list->nodes_len;
+		oper->args		= NEWS(phcalc_toper*,oper->nargs);
+		for(i=0; i<oper->nargs; i++){
+			oper->args[i] = phcalc_parse_compile_oper(inst,expr,list->nodes[i],err);
+			if(oper->args[i]==0){
+				FREE(oper->args);
+				FREE(oper);
+				return 0;
+			}
+		}
+		return oper;
 	}
 	phcalc_parse_newerror(err,node->src_line,-1,0,"Unknown operation",0);
 	FREE(oper);

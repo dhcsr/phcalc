@@ -44,7 +44,24 @@ void phcalc_expr_release_rec(phcalc_toper *oper) {
 	free(oper);
 }
 
-void phcalc_obj_release(phcalc_inst inst, phcalc_obj obj) {
+phcalc_obj phcalc_clone_obj(phcalc_inst inst, phcalc_obj *src) {
+	int i;
+	phcalc_obj newobj = *src;
+	switch(src->type){
+	case PHC_OBJ_NUM:
+		newobj.ref.num = src->ref.num;
+		break;
+	case PHC_OBJ_VECT:
+		newobj.ref.vect = src->ref.vect;
+		newobj.ref.vect.data = NEWS(phcalc_obj,newobj.ref.vect.len);
+		for(i=0; i<newobj.ref.vect.len; i++)
+			newobj.ref.vect.data[i] = phcalc_clone_obj(inst,&newobj.ref.vect.data[i]);
+		break;
+	}
+	return newobj;
+}
+
+void phcalc_release_obj(phcalc_inst inst, phcalc_obj *obj) {
 	// TODO:
 }
 

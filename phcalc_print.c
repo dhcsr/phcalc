@@ -83,7 +83,24 @@ int phcalc_getopersign(char *str, phcalc_opertype opertype) {
 
 int phcalc_strobj(phcalc_obj *obj, char *str, int len) {
 	if(obj->type==PHC_OBJ_NUM){
-		sprintf(str,"%f'%f",(float)obj->ref.num->value,(float)obj->ref.num->error);
+		if( dcmp(obj->ref.num.error,0.0)==0 )
+			sprintf(str,"%f",(float)obj->ref.num.value);
+		else
+			sprintf(str,"%f'%f",(float)obj->ref.num.value,(float)obj->ref.num.error);
+		return 1;
+	}
+	if(obj->type==PHC_OBJ_VECT){
+		int pos = 1;
+		int i;
+		str[0] = '{';
+		for(i=0; i<obj->ref.vect.len; i++){
+			if(i!=0)
+				str[pos++] = ',';
+			phcalc_strobj(&obj->ref.vect.data[i],str+pos,len-pos);
+			pos = strlen(str);
+		}
+		str[pos] = '}';
+		str[pos+1] = '\0';
 		return 1;
 	}
 	str[0] = 0;

@@ -20,22 +20,29 @@ typedef struct _phcalc_num phcalc_num;
 typedef struct _phcalc_obj phcalc_obj;
 typedef struct _phcalc_vect phcalc_vect;
 
-struct _phcalc_obj {
-	enum { PHC_OBJ_NUM, PHC_OBJ_VECT } type;
-	union {
-		phcalc_num *num;
-		phcalc_vect *vect;
-	} ref;
-};
+typedef enum _phcalc_type_basic {
+	PHC_OBJ_NUM,
+	PHC_OBJ_VECT,
+	PHC_OBJ_EXPR
+} phcalc_type_basic;
 
 struct _phcalc_vect {
 	int len;
-	phcalc_obj *vect;
+	phcalc_obj *data;
 };
 
 struct _phcalc_num {
 	double value;
 	double error;
+};
+
+struct _phcalc_obj {
+	phcalc_type_basic type;
+	union {
+		phcalc_num num;
+		phcalc_vect vect;
+		//phcalc_expr expr;
+	} ref;
 };
 
 // Create new instance
@@ -57,7 +64,10 @@ phcalc_inst phcalc_parsefile(FILE *fd);
 int phcalc_strexpr(phcalc_inst inst, phcalc_expr expr, char *str, int len);
 int phcalc_strobj(phcalc_obj *obj, char *str, int len);
 void phcalc_expr_release(phcalc_inst inst, phcalc_expr expr);
-void phcalc_obj_release(phcalc_inst inst, phcalc_obj obj);
+
+phcalc_obj phcalc_clone_obj(phcalc_inst inst, phcalc_obj *src);
+void phcalc_release_obj(phcalc_inst inst, phcalc_obj *obj);
+void phcalc_release_objs(phcalc_inst inst, phcalc_obj *obj, int count);
 
 /*
 Program sample:
