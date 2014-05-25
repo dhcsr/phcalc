@@ -21,6 +21,24 @@
 #include "dynarr.h"
 #include "phcalc_parse.h"
 
+// Evaluating error
+
+void phcalc_eval_newerror(tevalerr *err, int code, const char *desc, const char *buf) {
+	err->code	= code;
+	err->desc	= desc;
+	if(buf==0)
+		err->buf[0] = 0;
+	else
+		strcpy(err->buf,buf);
+}
+
+void phcalc_eval_printerror(FILE *fd, tevalerr *err) {
+	fprintf(fd,"Error: %s (%s)\n",err->desc,err->buf);
+}
+
+
+// Parsing errors
+
 void phcalc_parse_newerror(tparseerr *err, int line, int pos, int code, const char *desc, const char *buf) {
 	err->line	= line;
 	err->pos	= pos;

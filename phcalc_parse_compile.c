@@ -153,6 +153,17 @@ phcalc_toper *phcalc_parse_compile_oper(phcalc_inst inst, phcalc_expr expr, tsno
 			}
 		}
 		return oper;
+	} else if( node->type == SNODE_NEGATE ){
+		oper->type		= PHC_OPER_NEG;
+		oper->id		= -1;
+		oper->nargs		= 1;
+		oper->args		= NEWS(phcalc_toper*,1);
+		oper->args[0]	= phcalc_parse_compile_oper(inst,expr,node->nodes[0],err);
+		if(oper->args[0]==0){
+			FREE(oper);
+			return 0;
+		}
+		return oper;
 	}
 	phcalc_parse_newerror(err,node->src_line,-1,0,"Unknown operation",0);
 	FREE(oper);

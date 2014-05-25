@@ -7,6 +7,7 @@
 
 int main_routine();
 void test_1();
+void print_help();
 
 int main(int argc, char *argv[]){
 	test_1();
@@ -24,14 +25,15 @@ int main_routine() {
 			arg[0] = 0;
 			arg ++;
 		}
-		if( strcmp(buf,"query")==0 && arg!=0 ){
+		if( strcmp(buf,"def")==0 && arg!=0 ){
 			phcalc_expr e = phcalc_parse(arg);
 			if(e==0){
 				printf("Unable to parse\n");
 			} else {
-				phcalc_strexpr(calc,e,buf,256);
-				printf("%s\n",buf);
-				phcalc_query(calc,e);
+				//phcalc_strexpr(calc,e,buf,256);
+				//printf("%s\n",buf);
+				if( !phcalc_query(calc,e) )
+					printf("Error\n");
 			}
 		} else if( strcmp(buf,"eval")==0 && arg!=0 ){
 			phcalc_expr e = phcalc_parse(arg);
@@ -46,9 +48,25 @@ int main_routine() {
 			}
 		} else if( strcmp(buf,"exit")==0 ){
 			break;
+		} else if( strcmp(buf,"help")==0 ){
+			print_help();
 		} else
-			printf("Unknown command\n");
+			printf("Unknown command\nPrint 'help' for help\n");
 	}
 	phcalc_destroy_inst(calc);
 	return 0;
+}
+
+void print_help() {
+	puts( 
+		"List of commands:\n"
+		"def   - define variable or function\n"
+		"        def x = 5\n"
+		"        def f(x) = x*x\n"
+		"undef - remove existing definition\n"
+		"        undef x\n"
+		"eval  - evaluate expression\n"
+		"        eval 1+f(x)\n"
+		"help  - help\n"
+	);
 }

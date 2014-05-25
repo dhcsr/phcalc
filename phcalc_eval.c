@@ -7,6 +7,8 @@
 #include "phcalc.h"
 #include "phcalc_in.h"
 
+#define MAX_REC_DEPTH		512
+
 phcalc_num phcalc_execoper_s2(phcalc_opertype opertype, phcalc_num arg1, phcalc_num arg2);
 
 int phcalc_execoper(phcalc_evalctx *ctx, phcalc_toper *oper, phcalc_obj *res);
@@ -27,7 +29,10 @@ int phcalc_eval(phcalc_inst inst, phcalc_expr expr, phcalc_obj *res) {
 	ctx->prev = 0;
 	ctx->inst = inst;
 	ctx->expr = 0;
+	ctx->rec_depth = 0;
 	ret = phcalc_eval2(ctx,expr,expr->roper,res);
+	if(!ret)
+		phcalc_eval_printerror(stderr,&ctx->err);
 	FREE(ctx);
 	return ret;
 }
@@ -38,7 +43,15 @@ int phcalc_eval2(phcalc_evalctx *ctx, phcalc_expr expr, phcalc_toper *roper, phc
 	nctx->prev = ctx;
 	nctx->inst = ctx->inst;
 	nctx->expr = expr;
+	nctx->rec_depth = ctx->rec_depth + 1;
+	if( nctx->rec_depth > MAX_REC_DEPTH ){
+		phcalc_eval_newerror(&ctx->err,0,"Recursion is too deep",0);
+		FREE(nctx);
+		return 0;
+	}
 	ret = phcalc_execoper(nctx,roper,res);
+	if(!ret)
+		ctx->err = nctx->err;
 	FREE(nctx);
 	return ret;
 }
@@ -71,6 +84,7 @@ int phcalc_execoper1(phcalc_evalctx *ctx, phcalc_toper *oper, phcalc_obj *args, 
 	for(i=0; i<oper->nargs; i++){
 		amapping[i] = phcalc_comparetypes_map(ctx,&args[i],&types[i]);
 		if(amapping[i]==-1){
+			phcalc_eval_newerror(&ctx->err,0,"Unable to determine a type of argument for operation",0);
 			FREE(amapping);
 			return 0;
 		}
@@ -81,6 +95,7 @@ int phcalc_execoper1(phcalc_evalctx *ctx, phcalc_toper *oper, phcalc_obj *args, 
 			if(count==-1)
 				count = cnt;
 			else if(count!=cnt){
+				phcalc_eval_newerror(&ctx->err,0,"Incompatible vector to process",0);
 				FREE(amapping);
 				return 0;
 			}
@@ -109,6 +124,7 @@ int phcalc_execoper1(phcalc_evalctx *ctx, phcalc_toper *oper, phcalc_obj *args, 
 		}
 	}
 	FREE(amapping);
+	FREE(rargs);
 	return 1;
 }
 
@@ -120,11 +136,15 @@ int phcalc_execoper2(phcalc_evalctx *ctx, phcalc_toper *oper, phcalc_obj *args, 
 		res->ref.num = oper->num;
 		return 1; }
 	case PHC_OPER_VAR: {
-		phcalc_obj *def = phcalc_getdef(ctx->inst,ctx->expr->names[oper->id]);
+		phcalc_obj *def;
+		assert(oper->id!=-1);
+		def = phcalc_getdef(ctx->inst,ctx->expr->names[oper->id]);
 		if(def==0){
 			phcalc_num num;
-			if( !phcalc_const(ctx->expr->names[oper->id],&num) )
+			if( !phcalc_const(ctx->expr->names[oper->id],&num) ){
+				phcalc_eval_newerror(&ctx->err,0,"Variable is not found",ctx->expr->names[oper->id]);
 				return 0;
+			}
 			res->type		= PHC_OBJ_NUM;
 			res->ref.num	= num;
 			return 1;
@@ -134,11 +154,14 @@ int phcalc_execoper2(phcalc_evalctx *ctx, phcalc_toper *oper, phcalc_obj *args, 
 			return 1;
 		} else if( def->type==PHC_OBJ_EXPR ){
 			phcalc_expr dexpr = def->ref.expr;
-			if(dexpr->roper->args[0]->type!=PHC_OPER_VAR)
+			if(dexpr->roper->args[0]->type!=PHC_OPER_VAR){
+				phcalc_eval_newerror(&ctx->err,0,"Defined object isn't a variable",ctx->expr->names[oper->id]);
 				return 0;
+			}
 			if( !phcalc_eval2(ctx,dexpr,dexpr->roper->args[1],res) )
 				return 0;
 			return 1; }
+		assert(0);
 		return 0; }
 	case PHC_OPER_VCT:
 		res->type = PHC_OBJ_VECT;
@@ -152,8 +175,10 @@ int phcalc_execoper2(phcalc_evalctx *ctx, phcalc_toper *oper, phcalc_obj *args, 
 	case PHC_OPER_MUL:
 	case PHC_OPER_DIV:
 	case PHC_OPER_POW:
-		if(oper->nargs!=2)
+		if(oper->nargs!=2){
+			phcalc_eval_newerror(&ctx->err,0,"Incorrect argument number",0);
 			return 0;
+		}
 		if( args[0].type==PHC_OBJ_NUM && args[1].type==PHC_OBJ_NUM ){
 			res->type = PHC_OBJ_NUM;
 			res->ref.num = phcalc_execoper_s2(oper->type,args[0].ref.num,args[1].ref.num);
@@ -163,8 +188,10 @@ int phcalc_execoper2(phcalc_evalctx *ctx, phcalc_toper *oper, phcalc_obj *args, 
 	case PHC_OPER_FNC: {
 		phcalc_obj *def = phcalc_getdef(ctx->inst,ctx->expr->names[oper->id]);
 		if(def==0){
-			if( !phcalc_mfunc(ctx,ctx->expr->names[oper->id],args,oper->nargs,res) )
+			if( !phcalc_mfunc(ctx,ctx->expr->names[oper->id],args,oper->nargs,res) ){
+				phcalc_eval_newerror(&ctx->err,0,"Function is not found",ctx->expr->names[oper->id]);
 				return 0;
+			}
 			return 1;
 		}
 		if( def->type==PHC_OBJ_NUM || def->type==PHC_OBJ_VECT ){
@@ -172,15 +199,30 @@ int phcalc_execoper2(phcalc_evalctx *ctx, phcalc_toper *oper, phcalc_obj *args, 
 			return 1;
 		} else if( def->type==PHC_OBJ_EXPR ){
 			phcalc_expr dexpr = def->ref.expr;
-			if(dexpr->roper->args[0]->type!=PHC_OPER_FNC)
+			if(dexpr->roper->args[0]->type!=PHC_OPER_FNC){
+				phcalc_eval_newerror(&ctx->err,0,"Defined object isn't a function",ctx->expr->names[oper->id]);
 				return 0;
-			if( dexpr->roper->args[0]->nargs != oper->nargs )
+			}
+			if( dexpr->roper->args[0]->nargs != oper->nargs ){
+				phcalc_eval_newerror(&ctx->err,0,"Incorrect argument number",0);
 				return 0;
+			}
 			if( !phcalc_eval_func(ctx,dexpr,args,res) )
 				return 0;
 			return 1; }
+		assert(0);
 		return 0; }
+	case PHC_OPER_NEG: {
+		if(oper->nargs!=1){
+			phcalc_eval_newerror(&ctx->err,0,"Incorrect argument number",0);
+			return 0;
+		}
+		assert( args[0].type==PHC_OBJ_NUM );
+		res->type	 = PHC_OBJ_NUM;
+		res->ref.num = phcalc_neg(args[0].ref.num);
+		return 1; }
 	}
+	assert(0);
 	return 0;
 }
 
@@ -188,7 +230,8 @@ int phcalc_getargtypes(phcalc_evalctx *ctx, phcalc_toper *oper, phcalc_typedef *
 	int i;
 	if(oper->type==PHC_OPER_FNC){
 		const char *name = ctx->expr->names[oper->id];
-		if( strcmp(name,"Average")==0 ){
+		if( strcmp(name,"Average")==0
+			|| strcmp(name,"Mean")==0 ){
 			if(oper->nargs!=1)
 				return 0;
 			types[0].type = PHC_OBJ_VECT;
@@ -239,24 +282,34 @@ phcalc_num phcalc_execoper_s2(phcalc_opertype opertype, phcalc_num arg1, phcalc_
 int phcalc_eval_func(phcalc_evalctx *ctx, phcalc_expr expr, phcalc_obj *args, phcalc_obj *res) {
 	int i;
 	int nargs = expr->roper->args[0]->nargs;
+	int ret;
 	phcalc_toper **alist = expr->roper->args[0]->args;
 	phcalc_inst inst = phcalc_create_inst();
 	phcalc_evalctx *nctx = NEW(phcalc_evalctx);
 	nctx->prev	= ctx;
 	nctx->inst	= inst;
 	nctx->expr	= expr;
+	nctx->rec_depth = ctx->rec_depth + 1;
+	if( nctx->rec_depth > MAX_REC_DEPTH ){
+		phcalc_eval_newerror(&ctx->err,0,"Recursion is too deep",0);
+		FREE(nctx);
+		return 0;
+	}
 	for(i=0; i<nargs; i++){
 		if( alist[i]->type!=PHC_OPER_VAR || alist[i]->id==-1 ){
+			phcalc_eval_newerror(&ctx->err,0,"Function definition is incorrect, argument isn't a viruable",0);
 			FREE(nctx);
 			phcalc_destroy_inst(inst);
 			return 0;
 		}
 		phcalc_adddef_obj_nocopy( inst, expr->names[alist[i]->id], args[i] );
 	}
-	phcalc_eval2(nctx,expr,expr->roper->args[1],res);
+	ret = phcalc_eval2(nctx,expr,expr->roper->args[1],res);
+	if(!ret)
+		ctx->err = nctx->err;
 	FREE(nctx);
 	phcalc_destroy_inst(inst);
-	return 1;
+	return ret;
 }
 
 int phcalc_vector_depth(phcalc_vect vect) {

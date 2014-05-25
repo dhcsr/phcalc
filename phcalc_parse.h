@@ -51,15 +51,9 @@ typedef enum _tsnodetype {
 	//SNODE_EXPR3,
 	SNODE_LIST,
 	SNODE_FUNC,
-	SNODE_VECTOR
+	SNODE_VECTOR,
+	SNODE_NEGATE
 } tsnodetype;
-
-typedef struct _tparseerr {
-	int line, pos;
-	int code;
-	const char *desc;
-	char buf[32];
-} tparseerr;
 
 typedef struct _ttoken {
 	ttokentype type;
@@ -88,9 +82,6 @@ typedef struct _tsyntaxctx {
 	int tokens_len;
 	tparseerr err;
 } tsyntaxctx;
-
-void phcalc_parse_newerror(tparseerr *err, int line, int pos, int code, const char *desc, const char *buf);
-void phcalc_parse_printerror(FILE *fd, tparseerr *err);
 
 int phcalc_parse_lexic(const char *src, ttoken **data, int *len, tparseerr *err);
 int phcalc_parse_number(const char *str, phcalc_num *num);

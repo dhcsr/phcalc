@@ -88,11 +88,26 @@ typedef struct _phcalc_typedef {
 	int vect_depth;
 } phcalc_typedef;
 
+typedef struct _tparseerr {
+	int line, pos;
+	int code;
+	const char *desc;
+	char buf[32];
+} tparseerr;
+
+typedef struct _tevalerr {
+	int code;
+	const char *desc;
+	char buf[64];
+} tevalerr;
+
 typedef struct _phcalc_evalctx phcalc_evalctx;
 struct _phcalc_evalctx {
 	phcalc_evalctx *prev;
 	phcalc_inst inst;
 	phcalc_expr expr;
+	tevalerr err;
+	int rec_depth;
 	void *stack;
 };
 
@@ -110,8 +125,14 @@ int phcalc_gettype(phcalc_inst inst, const char *name);
 
 int phcalc_getoperpriority(phcalc_opertype opertype);
 
-// EVALUATING:
 
+// Error handling functions:
+
+void phcalc_eval_newerror(tevalerr *err, int code, const char *desc, const char *buf);
+void phcalc_eval_printerror(FILE *fd, tevalerr *err);
+
+void phcalc_parse_newerror(tparseerr *err, int line, int pos, int code, const char *desc, const char *buf);
+void phcalc_parse_printerror(FILE *fd, tparseerr *err);
 
 
 // Math functions:
@@ -123,6 +144,7 @@ int phcalc_cmp(phcalc_num x, phcalc_num y);
 int phcalc_const(const char *name, phcalc_num *res);
 int phcalc_mfunc(phcalc_evalctx *ctx, const char *name, phcalc_obj *args, int nargs, phcalc_obj *res);
 
+phcalc_num phcalc_neg(phcalc_num x);
 phcalc_num phcalc_add(phcalc_num x, phcalc_num y);
 phcalc_num phcalc_sub(phcalc_num x, phcalc_num y);
 phcalc_num phcalc_mul(phcalc_num x, phcalc_num y);
@@ -132,3 +154,4 @@ phcalc_num phcalc_pow(phcalc_num x, phcalc_num y);
 phcalc_num phcalc_abs(phcalc_num x);		// Abs
 phcalc_num phcalc_sqrt(phcalc_num x);		// Sqrt
 int phcalc_average(phcalc_num *res, phcalc_vect vector);
+int phcalc_mean(phcalc_num *res, phcalc_vect vector);

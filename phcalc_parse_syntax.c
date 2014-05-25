@@ -223,6 +223,8 @@ tsnode *phcalc_parse_syntax_name(tsyntaxctx *ctx, int pos, int *len) {
 			tsnode *node1;
 			tsnode *node;
 			node1 = phcalc_parse_syntax_list(ctx,pos+2,&len1);
+			if( node1==0 )
+				return 0;
 			if( ctx->tokens[pos+2+len1].type != TOKEN_BRPC){
 				phcalc_parse_newerror(&ctx->err,ctx->tokens[pos+2+len1].line,ctx->tokens[pos+2+len1].pos,0,
 					"Unexpected token",gettokenname(ctx->tokens[pos+2+len1].type));
@@ -240,6 +242,8 @@ tsnode *phcalc_parse_syntax_name(tsyntaxctx *ctx, int pos, int *len) {
 	if(ctx->tokens[pos].type==TOKEN_BRPO) {
 		int len1;
 		tsnode *node = phcalc_parse_syntax_expr1(ctx,pos+1,&len1);
+		if( node==0 )
+			return 0;
 		if( ctx->tokens[pos+1+len1].type != TOKEN_BRPC){
 			phcalc_parse_newerror(&ctx->err,ctx->tokens[pos+1+len1].line,ctx->tokens[pos+1+len1].pos,0,
 				"Unexpected token",gettokenname(ctx->tokens[pos+1+len1].type));
@@ -253,6 +257,8 @@ tsnode *phcalc_parse_syntax_name(tsyntaxctx *ctx, int pos, int *len) {
 		tsnode *node1;
 		tsnode *node;
 		node1 = phcalc_parse_syntax_list(ctx,pos+1,&len1);
+		if( node1==0 )
+			return 0;
 		if( ctx->tokens[pos+1+len1].type != TOKEN_BRCC){
 			phcalc_parse_newerror(&ctx->err,ctx->tokens[pos+1+len1].line,ctx->tokens[pos+1+len1].pos,0,
 				"Unexpected token",gettokenname(ctx->tokens[pos+1+len1].type));
@@ -264,8 +270,16 @@ tsnode *phcalc_parse_syntax_name(tsyntaxctx *ctx, int pos, int *len) {
 		return node;
 	}
 	if(ctx->tokens[pos].type==TOKEN_MINUS) {
-		// TODO:
-		assert(0);
+		int len1;
+		tsnode *node1;
+		tsnode *node;
+		node1 = phcalc_parse_syntax_name(ctx,pos+1,&len1);
+		if( node1==0 )
+			return 0;
+		node = new_snode2(SNODE_NEGATE,1,ctx->tokens[pos].line);
+		node->nodes[0] = node1;
+		*len = len1 + 1;
+		return node;
 	}
 	phcalc_parse_newerror(&ctx->err,ctx->tokens[pos].line,ctx->tokens[pos].pos,0,
 		"Unexpected token",gettokenname(ctx->tokens[pos].type));
@@ -283,6 +297,9 @@ tsnode *phcalc_parse_syntax_list(tsyntaxctx *ctx, int pos, int *len) {
 		tsnode *node1;
 		node1 = phcalc_parse_syntax_expr1(ctx,offset,&len1);
 		if(node1==0){
+			if( ctx->tokens[pos].type==TOKEN_BRPC || ctx->tokens[pos].type==TOKEN_BRCC
+				|| ctx->tokens[pos].type==TOKEN_BRSC )
+				break;
 			dynarr_desable( (void**)&list );
 			FREE(list);
 			return 0;

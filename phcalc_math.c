@@ -22,6 +22,8 @@ double dabs(double x) {
 int dcmp(double x, double y) {
 	double mod = dabs(x)+dabs(y);
 	double dif = dabs(x-y);
+	if(x==y)
+		return 0;
 	if( dif/mod < D_EPSILON )
 		return 0;
 	if(x<y)
@@ -65,6 +67,9 @@ int phcalc_mfunc(phcalc_evalctx *ctx, const char *name, phcalc_obj *args, int na
 	} else  if( strcmp(name,"Average")==0 ){
 		assert(args[0].type==PHC_OBJ_VECT);
 		assert( phcalc_average(&fr,args[0].ref.vect) );
+	}  else  if( strcmp(name,"Mean")==0 ){
+		assert(args[0].type==PHC_OBJ_VECT);
+		assert( phcalc_mean(&fr,args[0].ref.vect) );
 	} else
 		ret_num = 0;
 	if(ret_num){
@@ -73,6 +78,13 @@ int phcalc_mfunc(phcalc_evalctx *ctx, const char *name, phcalc_obj *args, int na
 		return 1;
 	}
 	return 0;
+}
+
+phcalc_num phcalc_neg(phcalc_num x) {
+	phcalc_num z;
+	z.value = -x.value;
+	z.error = x.error;
+	return z;
 }
 
 phcalc_num phcalc_add(phcalc_num x, phcalc_num y) {
@@ -134,5 +146,35 @@ int phcalc_average(phcalc_num *res, phcalc_vect vector) {
 		sum = phcalc_add(sum,vector.data[i].ref.num);
 	}
 	*res = phcalc_div( sum, phcalc_num_new(vector.len,0) );
+	return 1;
+}
+
+int phcalc_mean(phcalc_num *res, phcalc_vect vector) {
+	int i;
+	double sum = 0.0;
+	double sdevsum = 0.0;
+	double errsum = 0.0;
+	double v_mean;
+	double v_sigma;
+	double v_merr;
+	for(i=0; i<vector.len; i++){
+		if(vector.data[i].type!=PHC_OBJ_NUM)
+			return 0;
+		sum += vector.data[i].ref.num.value;
+		errsum += vector.data[i].ref.num.error;
+	}
+	v_mean = sum / vector.len;
+	v_merr = errsum / vector.len / sqrt( (double)vector.len );
+	for(i=0; i<vector.len; i++){
+		if(vector.data[i].type!=PHC_OBJ_NUM)
+			return 0;
+		sdevsum += ( vector.data[i].ref.num.value - v_mean )*( vector.data[i].ref.num.value - v_mean );
+	}
+	v_sigma = sqrt( sdevsum / vector.len );
+	res->value = v_mean;
+	if( v_sigma > v_merr )
+		res->error = v_sigma;
+	else
+		res->error = v_merr;
 	return 1;
 }
