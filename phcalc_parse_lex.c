@@ -258,7 +258,7 @@ ttoken new_token(ttokentype type, const char *name, int line, int pos) {
 	if(name==0)
 		token.str = 0;
 	else
-		token.str = _strdup(name);
+		token.str = STRDUP(name);
 	return token;
 }
 

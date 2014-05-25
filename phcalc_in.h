@@ -14,9 +14,12 @@
 #pragma once
 
 #define NEW(type)				((type*) malloc(sizeof(type)))
+//#define NEW(type)				((type*) malloc2(sizeof(type),__FILE__,__LINE__))
 #define NEWS(type,cnt)			((type*) malloc(sizeof(type)*(cnt)))
 #define REALCS(ref,type,cnt)	((type*) realloc(ref,sizeof(type)*(cnt)))
 #define FREE(ref)				free(ref);
+#define STRDUP(str)				(strdup2(str))
+//#define STRDUP(str)				((char*) malloc2(strlen(str)+1,__FILE__,__LINE__))
 
 
 typedef enum _phcalc_opertype {
@@ -115,8 +118,8 @@ int phcalc_expr_allocname(phcalc_expr expr, const char *name);
 //const char *phcalc_expr_getname(phcalc_expr expr, int id);
 phcalc_expr phcalc_copyexpr(phcalc_expr expr, phcalc_toper *oper);
 
-void phcalc_adddef(phcalc_inst inst, char *name, phcalc_expr expr);
-void phcalc_adddef_obj_nocopy(phcalc_inst inst, char *name, phcalc_obj obj);
+void phcalc_adddef(phcalc_inst inst, const char *name, phcalc_expr expr);
+void phcalc_adddef_obj_nocopy(phcalc_inst inst, const char *name, phcalc_obj obj);
 phcalc_obj *phcalc_getdef(phcalc_inst inst, const char *name);
 
 int phcalc_gettype(phcalc_inst inst, const char *name);
@@ -155,3 +158,8 @@ phcalc_num phcalc_abs(phcalc_num x);		// Abs
 phcalc_num phcalc_sqrt(phcalc_num x);		// Sqrt
 int phcalc_average(phcalc_num *res, phcalc_vect vector);
 int phcalc_mean(phcalc_num *res, phcalc_vect vector);
+
+// Memory fixes
+
+void *malloc2(size_t size, const char *str, int);
+char *strdup2(const char *str);

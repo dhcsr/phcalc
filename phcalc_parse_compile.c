@@ -46,7 +46,7 @@ int phcalc_parse_compile_line(phcalc_inst inst, tsnode *line, tparseerr *err) {
 		expr->roper = phcalc_parse_compile_oper(inst,expr,line,err);
 		if(expr->roper==0)
 			return 0;
-		phcalc_query(inst,expr);
+		phcalc_define(inst,expr);
 		return 1;
 	}
 	assert(0);
@@ -176,7 +176,7 @@ int p_new_oper_p2(phcalc_toper *oper, phcalc_opertype type, phcalc_toper *arg1, 
 	oper->type		= type;
 	oper->id		= -1;
 	oper->nargs		= 2;
-	oper->args		= (phcalc_toper**) malloc( sizeof(phcalc_toper*)*oper->nargs );
+	oper->args		= NEWS(phcalc_toper*,oper->nargs); //(phcalc_toper**) malloc( sizeof(phcalc_toper*)*oper->nargs );
 	oper->args[0]	= arg1;
 	oper->args[1]	= arg2;
 	return 1;

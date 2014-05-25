@@ -63,7 +63,7 @@ phcalc_inst phcalc_parsefile(FILE *fd);
 
 int phcalc_strexpr(phcalc_inst inst, phcalc_expr expr, char *str, int len);
 int phcalc_strobj(phcalc_obj *obj, char *str, int len);
-void phcalc_expr_release(phcalc_inst inst, phcalc_expr expr);
+void phcalc_expr_release(phcalc_expr expr);
 
 phcalc_obj phcalc_clone_obj(phcalc_inst inst, phcalc_obj *src);
 void phcalc_release_obj(phcalc_inst inst, phcalc_obj *obj);
@@ -79,7 +79,8 @@ len(x,y) := x*x + y*y
 l := len(x,y)
 */
 
-int phcalc_query(phcalc_inst inst, phcalc_expr expr);
+int phcalc_define(phcalc_inst inst, phcalc_expr expr);
+int phcalc_undefine(phcalc_inst inst, const char *name);
 int phcalc_eval(phcalc_inst inst, phcalc_expr expr, phcalc_obj *res);
 
 //int phcalc_getoperpriority(int opertype);

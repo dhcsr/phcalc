@@ -56,4 +56,7 @@ void test_prim_eval() {
 	phcalc_eval(calc,e1,&r1);
 	assert(r1.type==PHC_OBJ_NUM);
 	assert( requal2( r1.ref.num, 9.0/4.0, 0.0 ) );
+	phcalc_expr_release(e2);
+	phcalc_expr_release(e1);
+	phcalc_destroy_inst(calc);
 }

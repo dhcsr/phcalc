@@ -1,4 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -10,8 +13,9 @@ void test_1();
 void print_help();
 
 int main(int argc, char *argv[]){
-	test_1();
+	//test_1();
 	main_routine();
+	_CrtDumpMemoryLeaks();
 }
 
 int main_routine() {
@@ -32,9 +36,13 @@ int main_routine() {
 			} else {
 				//phcalc_strexpr(calc,e,buf,256);
 				//printf("%s\n",buf);
-				if( !phcalc_query(calc,e) )
+				if( !phcalc_define(calc,e) )
 					printf("Error\n");
+				phcalc_expr_release(e);
 			}
+		} else if( strcmp(buf,"undef")==0 && arg!=0 ){
+			if( !phcalc_undefine(calc,arg) )
+					printf("Error\n");
 		} else if( strcmp(buf,"eval")==0 && arg!=0 ){
 			phcalc_expr e = phcalc_parse(arg);
 			phcalc_obj r;
@@ -45,6 +53,7 @@ int main_routine() {
 				} else {
 					printf("Error\n");
 				}
+				phcalc_expr_release(e);
 			}
 		} else if( strcmp(buf,"exit")==0 ){
 			break;

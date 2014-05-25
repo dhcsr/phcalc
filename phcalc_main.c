@@ -9,6 +9,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #include "phcalc.h"
 #include "phcalc_in.h"
@@ -27,17 +28,22 @@ void phcalc_destroy_inst(phcalc_inst inst) {
 	while( def!=0 ){
 		phcalc_inst_def *next = def->next;
 		phcalc_release_obj(inst,&def->obj);
+		FREE(def->name);
 		FREE(def);
 		def = next;
 	}
 	FREE(inst);
 }
 
-void phcalc_expr_release(phcalc_inst inst, phcalc_expr expr) {
+void phcalc_expr_release(phcalc_expr expr) {
 	phcalc_expr_release_rec(expr->roper);
-	if(expr->names!=0)
-		free(expr->names);
-	free(expr);
+	if(expr->names!=0){
+		int i;
+		for(i=0; expr->names[i]!=0; i++)
+			FREE(expr->names[i]);
+		FREE(expr->names);
+	}
+	FREE(expr);
 }
 
 void phcalc_expr_release_rec(phcalc_toper *oper) {
@@ -72,7 +78,19 @@ phcalc_obj phcalc_clone_obj(phcalc_inst inst, phcalc_obj *src) {
 }
 
 void phcalc_release_obj(phcalc_inst inst, phcalc_obj *obj) {
-	// TODO:
+	int i;
+	switch(obj->type){
+	case PHC_OBJ_NUM:
+		break;
+	case PHC_OBJ_VECT:
+		for(i=0; i<obj->ref.vect.len; i++)
+			phcalc_release_obj(inst,&obj->ref.vect.data[i]);
+		FREE(obj->ref.vect.data);
+		break;
+	case PHC_OBJ_EXPR:
+		phcalc_expr_release(obj->ref.expr);
+		break;
+	}
 }
 
 phcalc_num phcalc_num_new(double val, double err) {
@@ -82,10 +100,62 @@ phcalc_num phcalc_num_new(double val, double err) {
 	return num;
 }
 
-int phcalc_query(phcalc_inst inst, phcalc_expr expr) {
+int phcalc_define(phcalc_inst inst, phcalc_expr expr) {
 	if(expr->roper->type == PHC_OPER_DEF){
+		assert( expr->roper->args[0]->id >= 0 );
+		if( phcalc_getdef(inst,expr->names[expr->roper->args[0]->id])!= 0 ){
+			fprintf(stderr,"Name exsits, unable to difine\n");
+			return 0;
+		}
 		phcalc_adddef( inst, expr->names[expr->roper->args[0]->id], expr );
 		return 1;
+	}
+	return 0;
+}
+
+int phcalc_undefine(phcalc_inst inst, const char *name) {
+	phcalc_inst_def *iter = inst->defs;
+	phcalc_inst_def *prev = 0;
+	while(iter!=0){
+		if( strcmp(iter->name,name)==0 ){
+			phcalc_release_obj(inst,&iter->obj);
+			if(prev==0)
+				inst->defs = iter->next;
+			else
+				prev->next = iter->next;
+			FREE(iter->name);
+			FREE(iter);
+			return 1;
+		}
+		prev = iter;
+		iter = iter->next;
+	}
+	return 0;
+}
+
+void phcalc_adddef_obj_nocopy(phcalc_inst inst, const char *name, phcalc_obj obj) {
+	phcalc_inst_def *def = NEW(phcalc_inst_def);
+	def->name	= STRDUP(name);
+	def->obj	= obj;
+	def->next	= inst->defs;
+	inst->defs	= def;
+}
+
+void phcalc_adddef(phcalc_inst inst, const char *name, phcalc_expr expr) {
+	phcalc_inst_def *def = NEW(phcalc_inst_def);
+	def->name			= STRDUP(name);
+	def->obj.type		= PHC_OBJ_EXPR;
+	def->obj.ref.expr	= phcalc_copyexpr(expr,expr->roper);
+	def->next			= inst->defs;
+	inst->defs			= def;
+}
+
+phcalc_obj *phcalc_getdef(phcalc_inst inst, const char *name) {
+	phcalc_inst_def *iter = inst->defs;
+	while(iter!=0){
+		if( strcmp(iter->name,name)==0 )
+			return &iter->obj;
+		iter = iter->next;
 	}
 	return 0;
 }
@@ -99,7 +169,7 @@ int phcalc_expr_allocname(phcalc_expr expr, const char *name) {
 	}
 	}
 	expr->names = (char**) realloc(expr->names,sizeof(char*)*(i+2));
-	expr->names[i  ] = _strdup(name);
+	expr->names[i  ] = STRDUP(name);
 	expr->names[i+1] = 0;
 	return i;
 }
@@ -114,7 +184,7 @@ phcalc_expr phcalc_copyexpr(phcalc_expr expr, phcalc_toper *oper) {
 		for(i=0; expr->names[i]; i++){}
 		nexpr->names = NEWS(char*,i+1);
 		for(i=0; expr->names[i]; i++)
-			nexpr->names[i] = expr->names[i];
+			nexpr->names[i] = STRDUP(expr->names[i]);
 		nexpr->names[i] = 0;
 	} else
 		nexpr->names = 0;
@@ -126,7 +196,10 @@ phcalc_toper *phcalc_copyexpr_rec(phcalc_toper *oper) {
 	int i;
 	phcalc_toper *noper = NEW(phcalc_toper);
 	*noper = *oper;
-	noper->args = NEWS(phcalc_toper*,oper->nargs);
+	if( oper->nargs > 0 )
+		noper->args = NEWS(phcalc_toper*,oper->nargs);
+	else
+		noper->args = 0;
 	for(i=0; i<oper->nargs; i++)
 		noper->args[i] = phcalc_copyexpr_rec(oper->args[i]);
 	return noper;
@@ -150,29 +223,18 @@ int phcalc_getoperpriority(phcalc_opertype opertype) {
 	return 0;
 }
 
-void phcalc_adddef(phcalc_inst inst, char *name, phcalc_expr expr) {
-	phcalc_inst_def *def = NEW(phcalc_inst_def);
-	def->name	= name;
-	def->obj.type		= PHC_OBJ_EXPR;
-	def->obj.ref.expr	= phcalc_copyexpr(expr,expr->roper);
-	def->next	= inst->defs;
-	inst->defs	= def;
+FILE *logfile = 0;
+
+void *malloc2(size_t size, const char *str, int line) {
+	void *mem = malloc(size);
+	if(logfile==0)
+		logfile = fopen("log.txt","wt");
+	fprintf(logfile,"Alloc %p of %d at %s,%d\n",mem,size,str,line);
+	return mem;
 }
 
-void phcalc_adddef_obj_nocopy(phcalc_inst inst, char *name, phcalc_obj obj) {
-	phcalc_inst_def *def = NEW(phcalc_inst_def);
-	def->name	= name;
-	def->obj	= obj;
-	def->next	= inst->defs;
-	inst->defs	= def;
-}
-
-phcalc_obj *phcalc_getdef(phcalc_inst inst, const char *name) {
-	phcalc_inst_def *iter = inst->defs;
-	while(iter!=0){
-		if( strcmp(iter->name,name)==0 )
-			return &iter->obj;
-		iter = iter->next;
-	}
-	return 0;
+char *strdup2(const char *str) {
+	char *n = NEWS(char,strlen(str)+1);
+	strcpy(n,str);
+	return n;
 }
