@@ -13,11 +13,18 @@
 
 #pragma once
 
-#define NEW(type)				((type*) malloc(sizeof(type)))
-//#define NEW(type)				((type*) malloc2(sizeof(type),__FILE__,__LINE__))
-#define NEWS(type,cnt)			((type*) malloc(sizeof(type)*(cnt)))
+//#define _HEAD_DEBUG
+
+#ifdef _HEAD_DEBUG
+	#define NEW(type)				((type*) malloc2(sizeof(type),__FILE__,__LINE__))
+	#define NEWS(type,cnt)			((type*) malloc2(sizeof(type)*(cnt),__FILE__,__LINE__))
+#else
+	#define NEW(type)				((type*) malloc(sizeof(type)))
+	#define NEWS(type,cnt)			((type*) malloc(sizeof(type)*(cnt)))
+#endif
+
 #define REALCS(ref,type,cnt)	((type*) realloc(ref,sizeof(type)*(cnt)))
-#define FREE(ref)				free(ref);
+#define FREE(ref)				(free(ref));
 #define STRDUP(str)				(strdup2(str))
 //#define STRDUP(str)				((char*) malloc2(strlen(str)+1,__FILE__,__LINE__))
 
@@ -154,8 +161,16 @@ phcalc_num phcalc_mul(phcalc_num x, phcalc_num y);
 phcalc_num phcalc_div(phcalc_num x, phcalc_num y);
 phcalc_num phcalc_pow(phcalc_num x, phcalc_num y);
 
-phcalc_num phcalc_abs(phcalc_num x);		// Abs
-phcalc_num phcalc_sqrt(phcalc_num x);		// Sqrt
+phcalc_num phcalc_abs(phcalc_num x);
+phcalc_num phcalc_sqrt(phcalc_num x);
+phcalc_num phcalc_log(phcalc_num x);
+phcalc_num phcalc_exp(phcalc_num x);
+phcalc_num phcalc_cos(phcalc_num x);
+phcalc_num phcalc_sin(phcalc_num x);
+phcalc_num phcalc_tan(phcalc_num x);
+phcalc_num phcalc_arcsin(phcalc_num x);
+phcalc_num phcalc_arccos(phcalc_num x);
+phcalc_num phcalc_arctan(phcalc_num x);
 int phcalc_average(phcalc_num *res, phcalc_vect vector);
 int phcalc_mean(phcalc_num *res, phcalc_vect vector);
 

@@ -26,8 +26,7 @@ void test_1() {
 void test_prim_funcs() {
 	phcalc_num
 		x = {10,0.1},
-		y = {15,0.2},
-		z;
+		y = {15,0.2};
 	assert( dequal(4.00000001,4.00000002) );
 	assert( !dequal(4.0001,4.0002) );
 	assert( requal2( phcalc_add(x,y), 25, 0.3 ) );

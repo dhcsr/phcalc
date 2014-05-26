@@ -59,28 +59,36 @@ int phcalc_eval2(phcalc_evalctx *ctx, phcalc_expr expr, phcalc_toper *roper, phc
 int phcalc_execoper(phcalc_evalctx *ctx, phcalc_toper *oper, phcalc_obj *res) {
 	int i;
 	int ret;
-	phcalc_typedef *types;
-	phcalc_obj *args = NEWS(phcalc_obj,oper->nargs);
+	phcalc_typedef *types = 0;
+	phcalc_obj *args = 0;
+	if( oper->nargs > 0 )
+		args = NEWS(phcalc_obj,oper->nargs);
 	for(i=0; i<oper->nargs; i++){
 		if( !phcalc_execoper(ctx,oper->args[i],&args[i]) ){
-			FREE(args);
+			if( oper->nargs > 0 )
+				FREE(args);
 			return 0;
 		}
 	}
-	types = NEWS(phcalc_typedef,oper->nargs);
+	if( oper->nargs > 0 )
+		types = NEWS(phcalc_typedef,oper->nargs);
 	phcalc_getargtypes(ctx,oper,types);
 	ret = phcalc_execoper1(ctx,oper,args,types,res);
 	for(i=0; i<oper->nargs; i++)
 		phcalc_release_obj(ctx->inst,&args[i]);
-	FREE(args);
-	FREE(types);
+	if( oper->nargs > 0 ){
+		FREE(args);
+		FREE(types);
+	}
 	return ret;
 }
 
 int phcalc_execoper1(phcalc_evalctx *ctx, phcalc_toper *oper, phcalc_obj *args, phcalc_typedef *types, phcalc_obj *res) {
 	int i, j, count = -1, ret;
-	phcalc_obj *rargs;
-	int *amapping = NEWS(int,oper->nargs);
+	phcalc_obj *rargs = 0;
+	int *amapping = 0;
+	if( oper->nargs > 0 )
+		amapping = NEWS(int,oper->nargs);
 	for(i=0; i<oper->nargs; i++){
 		amapping[i] = phcalc_comparetypes_map(ctx,&args[i],&types[i]);
 		if(amapping[i]==-1){
@@ -96,20 +104,23 @@ int phcalc_execoper1(phcalc_evalctx *ctx, phcalc_toper *oper, phcalc_obj *args, 
 				count = cnt;
 			else if(count!=cnt){
 				phcalc_eval_newerror(&ctx->err,0,"Incompatible vector to process",0);
-				FREE(amapping);
+				if( oper->nargs > 0 )
+					FREE(amapping);
 				return 0;
 			}
 		}
 	}
 	if(count==-1){
 		ret = phcalc_execoper2(ctx,oper,args,res);
-		FREE(amapping);
+		if( oper->nargs > 0 )
+			FREE(amapping);
 		return ret;
 	}
 	res->type = PHC_OBJ_VECT;
 	res->ref.vect.len	= count;
 	res->ref.vect.data	= NEWS(phcalc_obj,count);
-	rargs = NEWS(phcalc_obj,oper->nargs);
+	if( oper->nargs > 0 )
+		rargs = NEWS(phcalc_obj,oper->nargs);
 	for(j=0; j<count; j++){
 		for(i=0; i<oper->nargs; i++){
 			if(amapping[i]){
@@ -118,13 +129,17 @@ int phcalc_execoper1(phcalc_evalctx *ctx, phcalc_toper *oper, phcalc_obj *args, 
 				rargs[i] = args[i];
 		}
 		if( !phcalc_execoper1(ctx,oper,rargs,types,&res->ref.vect.data[j]) ){
-			FREE(amapping);
-			FREE(rargs);
+			if( oper->nargs > 0 ){
+				FREE(amapping);
+				FREE(rargs);
+			}
 			return 0;
 		}
 	}
-	FREE(amapping);
-	FREE(rargs);
+	if( oper->nargs > 0 ){
+		FREE(amapping);
+		FREE(rargs);
+	}
 	return 1;
 }
 

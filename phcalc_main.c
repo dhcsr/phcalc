@@ -7,6 +7,8 @@
  *
  **************************************/
 
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
@@ -229,7 +231,7 @@ void *malloc2(size_t size, const char *str, int line) {
 	void *mem = malloc(size);
 	if(logfile==0)
 		logfile = fopen("log.txt","wt");
-	fprintf(logfile,"Alloc %p of %d at %s,%d\n",mem,size,str,line);
+	fprintf(logfile,"Alloc 0x%p of %3d at %s,%d\n",mem,size,str,line);
 	return mem;
 }
 

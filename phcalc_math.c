@@ -12,7 +12,17 @@
 
 const phcalc_num
 	MC_PI	= { M_PI, 0.0 },
-	MC_E	= { M_E, 0.0 };
+	MC_E	= { M_E, 0.0 },
+	MC_c	= { 299792458, 0.0 },
+	MC_g	= { 9.80665, 0.0 },
+	MC_G	= { 6.67384E-11, 0.0 },
+	MC_Vm	= { 2.24141E-2, 0.0 },
+	MC_NA	= { 6.02214078E+23, 0.0 },
+	MC_e	= { 1.60217656535E-19, 0.0 },
+	MC_me	= { 9.1093829140E-31, 0.0 },
+	MC_mp	= { 1.67262177774E-27, 0.0 },
+	MC_h	= { 6.6260692729E-34, 0.0 },
+	MC_k	= { 1.380648813E-23, 0.0 };
 
 
 double dabs(double x) {
@@ -50,6 +60,36 @@ int phcalc_const(const char *name, phcalc_num *res) {
 	} else if( strcmp(name,"_E")==0 ){
 		*res = MC_E;
 		return 1;
+	} else if( strcmp(name,"_c")==0 ){
+		*res = MC_c;
+		return 1;
+	} else if( strcmp(name,"_g")==0 ){
+		*res = MC_g;
+		return 1;
+	} else if( strcmp(name,"_G")==0 ){
+		*res = MC_G;
+		return 1;
+	} else if( strcmp(name,"_Vm")==0 ){
+		*res = MC_Vm;
+		return 1;
+	} else if( strcmp(name,"_NA")==0 ){
+		*res = MC_NA;
+		return 1;
+	} else if( strcmp(name,"_e")==0 ){
+		*res = MC_e;
+		return 1;
+	} else if( strcmp(name,"_me")==0 ){
+		*res = MC_me;
+		return 1;
+	} else if( strcmp(name,"_mp")==0 ){
+		*res = MC_mp;
+		return 1;
+	} else if( strcmp(name,"_h")==0 ){
+		*res = MC_h;
+		return 1;
+	} else if( strcmp(name,"_k")==0 ){
+		*res = MC_k;
+		return 1;
 	}
 	return 0;
 
@@ -58,16 +98,42 @@ int phcalc_const(const char *name, phcalc_num *res) {
 int phcalc_mfunc(phcalc_evalctx *ctx, const char *name, phcalc_obj *args, int nargs, phcalc_obj *res) {
 	int ret_num = 1;
 	phcalc_num fr;
-	if( strcmp(name,"Abs")==0 ){
-		assert(args[0].type==PHC_OBJ_NUM);
-		fr = phcalc_abs(args[0].ref.num);
-	} else if( strcmp(name,"Sqrt")==0 ){
+	if( strcmp(name,"Sqrt")==0 ){
 		assert(args[0].type==PHC_OBJ_NUM);
 		fr = phcalc_sqrt(args[0].ref.num);
-	} else  if( strcmp(name,"Average")==0 ){
+	} else if( strcmp(name,"Abs")==0 ){
+		assert(args[0].type==PHC_OBJ_NUM);
+		fr = phcalc_abs(args[0].ref.num);
+	} else if( strcmp(name,"Log")==0 ){
+		assert(args[0].type==PHC_OBJ_NUM);
+		fr = phcalc_log(args[0].ref.num);
+	} else if( strcmp(name,"Exp")==0 ){
+		assert(args[0].type==PHC_OBJ_NUM);
+		fr = phcalc_exp(args[0].ref.num);
+	} else if( strcmp(name,"Sin")==0 ){
+		assert(args[0].type==PHC_OBJ_NUM);
+		fr = phcalc_sin(args[0].ref.num);
+	} else if( strcmp(name,"Cos")==0 ){
+		assert(args[0].type==PHC_OBJ_NUM);
+		fr = phcalc_cos(args[0].ref.num);
+	} else if( strcmp(name,"Tan")==0 ){
+		assert(args[0].type==PHC_OBJ_NUM);
+		fr = phcalc_tan(args[0].ref.num);
+	} else if( strcmp(name,"ArcSin")==0 ){
+		assert(args[0].type==PHC_OBJ_NUM);
+		fr = phcalc_arcsin(args[0].ref.num);
+	} else if( strcmp(name,"ArcCos")==0 ){
+		assert(args[0].type==PHC_OBJ_NUM);
+		fr = phcalc_arccos(args[0].ref.num);
+	} else if( strcmp(name,"ArcTan")==0 ){
+		assert(args[0].type==PHC_OBJ_NUM);
+		fr = phcalc_arctan(args[0].ref.num);
+	}
+	
+	else if( strcmp(name,"Average")==0 ){
 		assert(args[0].type==PHC_OBJ_VECT);
 		assert( phcalc_average(&fr,args[0].ref.vect) );
-	}  else  if( strcmp(name,"Mean")==0 ){
+	} else if( strcmp(name,"Mean")==0 ){
 		assert(args[0].type==PHC_OBJ_VECT);
 		assert( phcalc_mean(&fr,args[0].ref.vect) );
 	} else
@@ -133,7 +199,63 @@ phcalc_num phcalc_abs(phcalc_num x) {
 phcalc_num phcalc_sqrt(phcalc_num x) {
 	phcalc_num z;
 	z.value = sqrt( x.value );
-	z.error = z.value*( x.error/x.value );
+	z.error = z.value*( x.error/x.value )/2.0;
+	return z;
+}
+
+phcalc_num phcalc_log(phcalc_num x) {
+	phcalc_num z;
+	z.value = log( x.value );
+	z.error = log( 1.0 + x.error/x.value );
+	return z;
+}
+
+phcalc_num phcalc_exp(phcalc_num x) {
+	phcalc_num z;
+	z.value = exp( x.value );
+	z.error = z.value * ( exp( x.error ) - 1.0 );
+	return z;
+}
+
+phcalc_num phcalc_sin(phcalc_num x) {
+	phcalc_num z;
+	z.value = sin( x.value );
+	z.error = max( dabs( sin( x.value+x.error ) - z.value ), dabs( sin( x.value-x.error ) - z.value ) );
+	return z;
+}
+
+phcalc_num phcalc_cos(phcalc_num x) {
+	phcalc_num z;
+	z.value = sin( x.value );
+	z.error = max( dabs( cos( x.value+x.error ) - z.value ), dabs( cos( x.value-x.error ) - z.value ) );
+	return z;
+}
+
+phcalc_num phcalc_tan(phcalc_num x) {
+	phcalc_num z;
+	z.value = tan( x.value );
+	z.error = max( dabs( tan( x.value+x.error ) - z.value ), dabs( tan( x.value-x.error ) - z.value ) );
+	return z;
+}
+
+phcalc_num phcalc_arcsin(phcalc_num x) {
+	phcalc_num z;
+	z.value = asin( x.value );
+	z.error = max( dabs( asin( x.value+x.error ) - z.value ), dabs( asin( x.value-x.error ) - z.value ) );
+	return z;
+}
+
+phcalc_num phcalc_arccos(phcalc_num x) {
+	phcalc_num z;
+	z.value = acos( x.value );
+	z.error = max( dabs( acos( x.value+x.error ) - z.value ), dabs( acos( x.value-x.error ) - z.value ) );
+	return z;
+}
+
+phcalc_num phcalc_arctan(phcalc_num x) {
+	phcalc_num z;
+	z.value = atan( x.value );
+	z.error = max( dabs( atan( x.value+x.error ) - z.value ), dabs( atan( x.value-x.error ) - z.value ) );
 	return z;
 }
 

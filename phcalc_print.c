@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <math.h>
 
 #include "phcalc.h"
 #include "phcalc_in.h"
@@ -83,10 +84,32 @@ int phcalc_getopersign(char *str, phcalc_opertype opertype) {
 
 int phcalc_strobj(phcalc_obj *obj, char *str, int len) {
 	if(obj->type==PHC_OBJ_NUM){
-		if( dcmp(obj->ref.num.error,0.0)==0 )
-			sprintf(str,"%f",(float)obj->ref.num.value);
+		char buf[128];
+		char *buf2;
+		int exp;
+		double val, err, mul;
+		if( obj->ref.num.value==0.0 )
+			exp = 0;
 		else
-			sprintf(str,"%f'%f",(float)obj->ref.num.value,(float)obj->ref.num.error);
+			exp = (int) floor( log10( dabs(obj->ref.num.value) ) );
+		if( exp<3 && exp>-3 )
+			exp = 0;
+		mul = pow(10.0,exp);
+		val = obj->ref.num.value / mul;
+		err = obj->ref.num.error / mul;
+		if( dcmp(err,0.0)==0 )
+			sprintf(buf,"%f",(float)val);
+		else
+			sprintf(buf,"%f'%f",(float)val,(float)err);
+		buf2 = buf + strlen(buf);
+		if(exp!=0)
+			sprintf(buf2,"e%d",exp);
+		if( (int)strlen(buf) < len )
+			strcpy(str,buf);
+		else {
+			memcpy(str,buf,len-1);
+			str[len-1] = 0;
+		}
 		return 1;
 	}
 	if(obj->type==PHC_OBJ_VECT){

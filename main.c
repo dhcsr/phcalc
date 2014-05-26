@@ -13,7 +13,7 @@ void test_1();
 void print_help();
 
 int main(int argc, char *argv[]){
-	//test_1();
+	test_1();
 	main_routine();
 	_CrtDumpMemoryLeaks();
 }
@@ -49,6 +49,7 @@ int main_routine() {
 			if(e!=0){
 				if( phcalc_eval(calc,e,&r) ){
 					phcalc_strobj(&r,buf,512);
+					phcalc_release_obj(calc,&r);
 					printf("%s\n",buf);
 				} else {
 					printf("Error\n");
