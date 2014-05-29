@@ -13,6 +13,8 @@
 
 #pragma once
 
+#include "hashtable.h"
+
 //#define _HEAD_DEBUG
 
 #ifdef _HEAD_DEBUG
@@ -76,7 +78,10 @@ struct _phcalc_inst_def {
 
 struct _phcalc_inst {
 	int cd;
-	phcalc_inst_def *defs;
+	//phcalc_inst_def *defs;
+	lpHashTable defs;
+	phcalc_inst *imports;
+	int n_imports;
 };
 
 struct _phcalc_expr {
@@ -127,9 +132,9 @@ phcalc_expr phcalc_copyexpr(phcalc_expr expr, phcalc_toper *oper);
 
 void phcalc_adddef(phcalc_inst inst, const char *name, phcalc_expr expr);
 void phcalc_adddef_obj_nocopy(phcalc_inst inst, const char *name, phcalc_obj obj);
-phcalc_obj *phcalc_getdef(phcalc_inst inst, const char *name);
+//phcalc_obj *phcalc_getdef(phcalc_inst inst, const char *name);
 
-int phcalc_gettype(phcalc_inst inst, const char *name);
+//int phcalc_gettype(phcalc_inst inst, const char *name);
 //phcalc_num phcalc_getnum(phcalc_inst inst, const char *name);
 //phcalc_vector phcalc_getvecotr(phcalc_inst inst, const char *name);
 

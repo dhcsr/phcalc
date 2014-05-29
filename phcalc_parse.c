@@ -63,7 +63,8 @@ phcalc_inst phcalc_parsefile(FILE *fd) {
 	fseek(fd,0,SEEK_END);
 	len = ftell(fd);
 	fseek(fd,0,SEEK_SET);
-	src = NEWS(char,len+1);	//(char*) malloc(len+1);
+	src = NEWS(char,len+1);
+	if(src==0) return 0;
 	len = fread(src,1,len,fd);
 	src[len] = 0;
 	if( !phcalc_parse_lexic(src,&tokens,&len,&err) ){

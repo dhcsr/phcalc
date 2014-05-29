@@ -8,9 +8,11 @@
 
 #include "phcalc.h"
 
-int main_routine();
-void test_1();
-void print_help();
+#define BUF_SZ	512
+
+int main_routine();		// Main routine loop
+void test_1();			// Run tests
+void print_help();		// Print help
 
 int main(int argc, char *argv[]){
 	test_1();
@@ -20,7 +22,7 @@ int main(int argc, char *argv[]){
 
 int main_routine() {
 	phcalc_inst calc = phcalc_create_inst();
-	char buf[512];
+	char buf[BUF_SZ];
 	for(;;){
 		char *arg;
 		gets(buf);
@@ -34,7 +36,7 @@ int main_routine() {
 			if(e==0){
 				printf("Unable to parse\n");
 			} else {
-				//phcalc_strexpr(calc,e,buf,256);
+				//phcalc_strexpr(calc,e,buf,BUF_SZ);
 				//printf("%s\n",buf);
 				if( !phcalc_define(calc,e) )
 					printf("Error\n");
@@ -48,7 +50,7 @@ int main_routine() {
 			phcalc_obj r;
 			if(e!=0){
 				if( phcalc_eval(calc,e,&r) ){
-					phcalc_strobj(&r,buf,512);
+					phcalc_strobj(&r,buf,BUF_SZ);
 					phcalc_release_obj(calc,&r);
 					printf("%s\n",buf);
 				} else {
@@ -56,6 +58,14 @@ int main_routine() {
 				}
 				phcalc_expr_release(e);
 			}
+		} else if( strcmp(buf,"print")==0 ){
+			phcalc_obj *obj = phcalc_getdef(calc,arg);
+			if(obj!=0){
+				phcalc_strobj(obj,buf,BUF_SZ);
+				printf("%s\n",buf);
+			}
+		// } else if( strcmp(buf,"csv-load")==0 ){
+		// } else if( strcmp(buf,"csv-save")==0 ){
 		} else if( strcmp(buf,"exit")==0 ){
 			break;
 		} else if( strcmp(buf,"help")==0 ){
@@ -77,6 +87,9 @@ void print_help() {
 		"        undef x\n"
 		"eval  - evaluate expression\n"
 		"        eval 1+f(x)\n"
+		"print - print definition\n"
+		"        print x\n"
 		"help  - help\n"
+		"exit  - exit\n"
 	);
 }

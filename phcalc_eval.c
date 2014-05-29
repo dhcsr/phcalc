@@ -23,6 +23,12 @@ int phcalc_eval_func(phcalc_evalctx *ctx, phcalc_expr expr, phcalc_obj *arg, phc
 
 int phcalc_vector_depth(phcalc_vect vect);
 
+/*
+	Evaluate
+	Interface function
+	called from the outside of phcalc_library
+	returns resulat to `res`
+*/
 int phcalc_eval(phcalc_inst inst, phcalc_expr expr, phcalc_obj *res) {
 	phcalc_evalctx *ctx = NEW(phcalc_evalctx);
 	int ret;
@@ -37,6 +43,11 @@ int phcalc_eval(phcalc_inst inst, phcalc_expr expr, phcalc_obj *res) {
 	return ret;
 }
 
+/*
+	Evaluate expression `expr` begin with operation `roper`
+	create new eval. context
+	called to calculate variable or function
+*/
 int phcalc_eval2(phcalc_evalctx *ctx, phcalc_expr expr, phcalc_toper *roper, phcalc_obj *res) {
 	int ret;
 	phcalc_evalctx *nctx = NEW(phcalc_evalctx);
@@ -56,6 +67,10 @@ int phcalc_eval2(phcalc_evalctx *ctx, phcalc_expr expr, phcalc_toper *roper, phc
 	return ret;
 }
 
+/*
+	Execute operation
+	Step 1.
+*/
 int phcalc_execoper(phcalc_evalctx *ctx, phcalc_toper *oper, phcalc_obj *res) {
 	int i;
 	int ret;
@@ -83,6 +98,10 @@ int phcalc_execoper(phcalc_evalctx *ctx, phcalc_toper *oper, phcalc_obj *res) {
 	return ret;
 }
 
+/*
+	Execute operation
+	Step 2.
+*/
 int phcalc_execoper1(phcalc_evalctx *ctx, phcalc_toper *oper, phcalc_obj *args, phcalc_typedef *types, phcalc_obj *res) {
 	int i, j, count = -1, ret;
 	phcalc_obj *rargs = 0;
@@ -253,6 +272,11 @@ int phcalc_getargtypes(phcalc_evalctx *ctx, phcalc_toper *oper, phcalc_typedef *
 			types[0].vect_depth = 1;
 			return 1;
 		}
+		if( phcalc_getdef(ctx->inst,name) != 0 ){
+			for(i=0; i<oper->nargs; i++)
+				types[i].type = PHC_OBJ_ANY;
+			return 1;
+		}
 	}
 	for(i=0; i<oper->nargs; i++)
 		types[i].type = PHC_OBJ_NUM;
@@ -273,6 +297,9 @@ int phcalc_comparetypes_map(phcalc_evalctx *ctx, phcalc_obj *arg, phcalc_typedef
 		if( depth > type->vect_depth )
 			return 1;
 		return -1;
+	}
+	if( type->type==PHC_OBJ_ANY ){
+		return 0;
 	}
 	return -1;
 }
@@ -310,9 +337,10 @@ int phcalc_eval_func(phcalc_evalctx *ctx, phcalc_expr expr, phcalc_obj *args, ph
 		FREE(nctx);
 		return 0;
 	}
+	phcalc_import(inst,ctx->inst);
 	for(i=0; i<nargs; i++){
 		if( alist[i]->type!=PHC_OPER_VAR || alist[i]->id==-1 ){
-			phcalc_eval_newerror(&ctx->err,0,"Function definition is incorrect, argument isn't a viruable",0);
+			phcalc_eval_newerror(&ctx->err,0,"Function definition is incorrect, argument isn't a viriable",0);
 			FREE(nctx);
 			phcalc_destroy_inst(inst);
 			return 0;

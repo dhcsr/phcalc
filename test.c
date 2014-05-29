@@ -10,6 +10,7 @@
 
 void test_prim_funcs();
 void test_prim_eval();
+void test_csv();
 
 int dequal(double x, double y);
 int requal(phcalc_num x, phcalc_num y);
@@ -19,6 +20,7 @@ double dabs(double x);
 void test_1() {
 	test_prim_funcs();
 	test_prim_eval();
+	test_csv();
 	/*FILE *fd = fopen("prog.txt","rt");
 	phcalc_inst calc = phcalc_parsefile(fd);*/
 }
@@ -57,5 +59,13 @@ void test_prim_eval() {
 	assert( requal2( r1.ref.num, 9.0/4.0, 0.0 ) );
 	phcalc_expr_release(e2);
 	phcalc_expr_release(e1);
+	phcalc_destroy_inst(calc);
+}
+
+void test_csv() {
+	phcalc_inst calc = phcalc_create_inst();
+	FILE *file = fopen("1.csv","rt");
+	const char *fields[] = { "n", "x" };
+	phcalc_csv_load(calc,file,fields,2,0);
 	phcalc_destroy_inst(calc);
 }
