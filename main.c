@@ -64,7 +64,28 @@ int main_routine() {
 				phcalc_strobj(obj,buf,BUF_SZ);
 				printf("%s\n",buf);
 			}
-		// } else if( strcmp(buf,"csv-load")==0 ){
+		} else if( strcmp(buf,"csv-load")==0 ){
+			char *fields[32];
+			char *s2 = strchr(arg,' ');
+			if(s2!=0){
+				FILE *file;
+				int i = 0;
+				arg[s2-arg] = 0;
+				s2 ++;
+				fields[i++] = s2;
+				while( s2 = strchr(s2,',') ){
+					s2[0] = 0;
+					s2 ++;
+					fields[i++] = s2;
+				}
+				file = fopen(arg,"rt");
+				if(file != 0){
+					phcalc_csv_load(calc,file,fields,i,0);
+					fclose(file);
+				} else
+					printf("File is not found");
+			} else
+				printf("Incorrect command");
 		// } else if( strcmp(buf,"csv-save")==0 ){
 		} else if( strcmp(buf,"exit")==0 ){
 			break;
@@ -89,6 +110,8 @@ void print_help() {
 		"        eval 1+f(x)\n"
 		"print - print definition\n"
 		"        print x\n"
+		"csv-load - load csv file\n"
+		"        csv-load filename.csv x,y,z\n"
 		"help  - help\n"
 		"exit  - exit\n"
 	);

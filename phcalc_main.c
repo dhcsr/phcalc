@@ -145,7 +145,7 @@ int phcalc_undefine(phcalc_inst inst, const char *name) {
 	return 0;
 }
 
-void phcalc_adddef_obj_nocopy(phcalc_inst inst, const char *name, phcalc_obj obj) {
+void phcalc_adddef_obj_nocopy(phcalc_inst inst, const char *name, phcalc_obj obj, int del) {
 	/*phcalc_inst_def *def = NEW(phcalc_inst_def);
 	def->name	= STRDUP(name);
 	def->obj	= obj;
@@ -153,7 +153,7 @@ void phcalc_adddef_obj_nocopy(phcalc_inst inst, const char *name, phcalc_obj obj
 	inst->defs	= def;*/
 	phcalc_obj *nobj = NEW(phcalc_obj);
 	*nobj = obj;
-	nobj->not_delrec = 1;
+	nobj->not_delrec = !del;
 	ht_put(inst->defs,STRDUP(name),nobj);
 }
 

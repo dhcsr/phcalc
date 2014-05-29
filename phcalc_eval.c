@@ -345,7 +345,7 @@ int phcalc_eval_func(phcalc_evalctx *ctx, phcalc_expr expr, phcalc_obj *args, ph
 			phcalc_destroy_inst(inst);
 			return 0;
 		}
-		phcalc_adddef_obj_nocopy( inst, expr->names[alist[i]->id], args[i] );
+		phcalc_adddef_obj_nocopy( inst, expr->names[alist[i]->id], args[i], 0 );
 	}
 	ret = phcalc_eval2(nctx,expr,expr->roper->args[1],res);
 	if(!ret)

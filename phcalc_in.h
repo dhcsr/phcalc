@@ -131,7 +131,7 @@ int phcalc_expr_allocname(phcalc_expr expr, const char *name);
 phcalc_expr phcalc_copyexpr(phcalc_expr expr, phcalc_toper *oper);
 
 void phcalc_adddef(phcalc_inst inst, const char *name, phcalc_expr expr);
-void phcalc_adddef_obj_nocopy(phcalc_inst inst, const char *name, phcalc_obj obj);
+void phcalc_adddef_obj_nocopy(phcalc_inst inst, const char *name, phcalc_obj obj, int fdel);
 //phcalc_obj *phcalc_getdef(phcalc_inst inst, const char *name);
 
 //int phcalc_gettype(phcalc_inst inst, const char *name);
