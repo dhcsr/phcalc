@@ -264,12 +264,24 @@ int phcalc_getargtypes(phcalc_evalctx *ctx, phcalc_toper *oper, phcalc_typedef *
 	int i;
 	if(oper->type==PHC_OPER_FNC){
 		const char *name = ctx->expr->names[oper->id];
-		if( strcmp(name,"Average")==0
+		if( strcmp(name,"Length")==0
+			|| strcmp(name,"Sum")==0
+			|| strcmp(name,"Norm")==0
+			|| strcmp(name,"Average")==0
 			|| strcmp(name,"Mean")==0 ){
 			if(oper->nargs!=1)
 				return 0;
 			types[0].type = PHC_OBJ_VECT;
 			types[0].vect_depth = 1;
+			return 1;
+		}
+		if( strcmp(name,"Dot")==0 ){
+			if(oper->nargs!=2)
+				return 0;
+			types[0].type = PHC_OBJ_VECT;
+			types[0].vect_depth = 1;
+			types[1].type = PHC_OBJ_VECT;
+			types[1].vect_depth = 1;
 			return 1;
 		}
 		if( phcalc_getdef(ctx->inst,name) != 0 ){

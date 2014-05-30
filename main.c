@@ -83,10 +83,25 @@ int main_routine() {
 					phcalc_csv_load(calc,file,fields,i,0);
 					fclose(file);
 				} else
-					printf("File is not found");
+					printf("File is not found\n");
 			} else
-				printf("Incorrect command");
+				printf("Incorrect command\n");
 		// } else if( strcmp(buf,"csv-save")==0 ){
+		} else if( strcmp(buf,"load")==0 ){
+			phcalc_inst imp;
+			FILE *file;
+			file = fopen(arg,"r");
+			if(file != 0){
+				imp = phcalc_parsefile(file);
+				if(imp != 0){
+					//phcalc_destroy_inst(imp);
+					if( !phcalc_import(calc,imp) )
+						printf("Error\n");
+				} else
+					printf("Error\n");
+				fclose(file);
+			} else
+				printf("File is not found\n");
 		} else if( strcmp(buf,"exit")==0 ){
 			break;
 		} else if( strcmp(buf,"help")==0 ){
@@ -94,6 +109,7 @@ int main_routine() {
 		} else
 			printf("Unknown command\nPrint 'help' for help\n");
 	}
+	phcalc_release_imports(calc);
 	phcalc_destroy_inst(calc);
 	return 0;
 }

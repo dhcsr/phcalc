@@ -10,6 +10,12 @@
 
 #define max(x,y)	((x)>(y) ? (x) : (y))
 
+typedef double (*mfunc_1arg) (double x);
+typedef double (*mfunc_2arg) (double x, double y);
+
+phcalc_num mproc_1arg(mfunc_1arg func, phcalc_num x);
+phcalc_num mproc_2arg(mfunc_2arg func, phcalc_num x, phcalc_num y);
+
 const phcalc_num
 	MC_PI	= { M_PI, 0.0 },
 	MC_E	= { M_E, 0.0 },
@@ -128,14 +134,28 @@ int phcalc_mfunc(phcalc_evalctx *ctx, const char *name, phcalc_obj *args, int na
 	} else if( strcmp(name,"ArcTan")==0 ){
 		assert(args[0].type==PHC_OBJ_NUM);
 		fr = phcalc_arctan(args[0].ref.num);
+	} else if( strcmp(name,"ArcTan2")==0 ){
+		assert(args[0].type==PHC_OBJ_NUM);
+		assert(args[1].type==PHC_OBJ_NUM);
+		fr = phcalc_arctan2(args[0].ref.num,args[1].ref.num);
 	}
 	
-	else if( strcmp(name,"Average")==0 ){
+	else if( strcmp(name,"Length")==0 ){
+		assert(args[0].type==PHC_OBJ_VECT);
+		assert( phcalc_length(&fr,args[0].ref.vect) );
+	} else if( strcmp(name,"Sum")==0 ){
+		assert(args[0].type==PHC_OBJ_VECT);
+		assert( phcalc_sum(&fr,args[0].ref.vect) );
+	} else if( strcmp(name,"Average")==0 ){
 		assert(args[0].type==PHC_OBJ_VECT);
 		assert( phcalc_average(&fr,args[0].ref.vect) );
 	} else if( strcmp(name,"Mean")==0 ){
 		assert(args[0].type==PHC_OBJ_VECT);
 		assert( phcalc_mean(&fr,args[0].ref.vect) );
+	} else if( strcmp(name,"Dot")==0 ){
+		assert(args[0].type==PHC_OBJ_VECT);
+		assert(args[1].type==PHC_OBJ_VECT);
+		assert( phcalc_dot(&fr,args[0].ref.vect,args[1].ref.vect) );
 	} else
 		ret_num = 0;
 	if(ret_num){
@@ -144,6 +164,52 @@ int phcalc_mfunc(phcalc_evalctx *ctx, const char *name, phcalc_obj *args, int na
 		return 1;
 	}
 	return 0;
+}
+
+phcalc_num mproc_1arg(mfunc_1arg func, phcalc_num x) {
+	double val = func(x.value);
+	double min = val, max = val;
+	double vals[3];
+	int i;
+	phcalc_num res;
+	vals[0] = func(x.value-x.error);
+	vals[1] = func(x.value+x.error);
+	vals[2] = val;
+	for(i=0; i<3; i++){
+		if( vals[i] < min )
+			min = vals[i];
+		if( vals[i] > max )
+			max = vals[i];
+	}
+	res.value = val;
+	res.error = max( max-val, val-min );
+	return res;
+}
+
+phcalc_num mproc_2arg(mfunc_2arg func, phcalc_num x, phcalc_num y) {
+	double val = func(x.value,y.value);
+	double min = val, max = val;
+	double vals[9];
+	int i;
+	phcalc_num res;
+	vals[0] = func(x.value-x.error,y.value-y.error);
+	vals[1] = func(x.value+x.error,y.value-y.error);
+	vals[2] = func(x.value-x.error,y.value+y.error);
+	vals[3] = func(x.value+x.error,y.value+y.error);
+	vals[4] = val;
+	vals[5] = func(x.value,y.value-y.error);
+	vals[6] = func(x.value,y.value+y.error);
+	vals[7] = func(x.value-x.error,y.value);
+	vals[8] = func(x.value+x.error,y.value);
+	for(i=0; i<7; i++){
+		if( vals[i] < min )
+			min = vals[i];
+		if( vals[i] > max )
+			max = vals[i];
+	}
+	res.value = val;
+	res.error = max( max-val, val-min );
+	return res;
 }
 
 phcalc_num phcalc_neg(phcalc_num x) {
@@ -167,96 +233,86 @@ phcalc_num phcalc_sub(phcalc_num x, phcalc_num y) {
 	return z;
 }
 
+double phcalc_muld(double x, double y) {
+	return x*y;
+}
 phcalc_num phcalc_mul(phcalc_num x, phcalc_num y) {
-	phcalc_num z;
-	z.value = x.value * y.value;
-	z.error = z.value*(x.error/x.value + y.error/y.value);		// !!! fix with x,y->0
-	//z.error = abs( (x.value+x.error) * (y.value+y.error) - (x.value-x.error) * (y.value-y.error) );
-	return z;
+	return mproc_2arg(phcalc_muld,x,y);
 }
 
+double phcalc_divd(double x, double y) {
+	return x/y;
+}
 phcalc_num phcalc_div(phcalc_num x, phcalc_num y) {
-	phcalc_num z;
-	z.value = x.value / y.value;
-	z.error = z.value*(x.error/x.value + y.error/y.value);		// !!! fix with x,y->0
-	return z;
+	return mproc_2arg(phcalc_divd,x,y);
 }
 
+double phcalc_powd(double x, double y) {
+	return pow(x,y);
+}
 phcalc_num phcalc_pow(phcalc_num x, phcalc_num y) {
-	phcalc_num z;
-	z.value = pow( x.value, y.value );
-	z.error = z.value*(x.error/x.value + y.error*log(x.value));		// !!! check
-	return z;
+	return mproc_2arg(phcalc_powd,x,y);
 }
 
 phcalc_num phcalc_abs(phcalc_num x) {
-	phcalc_num z;
-	z.value = dabs( x.value );
-	z.error = x.error;
-	return z;
+	return mproc_1arg(dabs,x);
 }
 
 phcalc_num phcalc_sqrt(phcalc_num x) {
-	phcalc_num z;
-	z.value = sqrt( x.value );
-	z.error = z.value*( x.error/x.value )/2.0;
-	return z;
+	return mproc_1arg(sqrt,x);
 }
 
 phcalc_num phcalc_log(phcalc_num x) {
-	phcalc_num z;
-	z.value = log( x.value );
-	z.error = log( 1.0 + x.error/x.value );
-	return z;
+	return mproc_1arg(log,x);
 }
 
 phcalc_num phcalc_exp(phcalc_num x) {
-	phcalc_num z;
-	z.value = exp( x.value );
-	z.error = z.value * ( exp( x.error ) - 1.0 );
-	return z;
+	return mproc_1arg(exp,x);
 }
 
 phcalc_num phcalc_sin(phcalc_num x) {
-	phcalc_num z;
-	z.value = sin( x.value );
-	z.error = max( dabs( sin( x.value+x.error ) - z.value ), dabs( sin( x.value-x.error ) - z.value ) );
-	return z;
+	return mproc_1arg(sin,x);
 }
 
 phcalc_num phcalc_cos(phcalc_num x) {
-	phcalc_num z;
-	z.value = sin( x.value );
-	z.error = max( dabs( cos( x.value+x.error ) - z.value ), dabs( cos( x.value-x.error ) - z.value ) );
-	return z;
+	return mproc_1arg(cos,x);
 }
 
 phcalc_num phcalc_tan(phcalc_num x) {
-	phcalc_num z;
-	z.value = tan( x.value );
-	z.error = max( dabs( tan( x.value+x.error ) - z.value ), dabs( tan( x.value-x.error ) - z.value ) );
-	return z;
+	return mproc_1arg(tan,x);
 }
 
 phcalc_num phcalc_arcsin(phcalc_num x) {
-	phcalc_num z;
-	z.value = asin( x.value );
-	z.error = max( dabs( asin( x.value+x.error ) - z.value ), dabs( asin( x.value-x.error ) - z.value ) );
-	return z;
+	return mproc_1arg(asin,x);
 }
 
 phcalc_num phcalc_arccos(phcalc_num x) {
-	phcalc_num z;
-	z.value = acos( x.value );
-	z.error = max( dabs( acos( x.value+x.error ) - z.value ), dabs( acos( x.value-x.error ) - z.value ) );
-	return z;
+	return mproc_1arg(acos,x);
 }
 
 phcalc_num phcalc_arctan(phcalc_num x) {
-	phcalc_num z;
-	z.value = atan( x.value );
-	z.error = max( dabs( atan( x.value+x.error ) - z.value ), dabs( atan( x.value-x.error ) - z.value ) );
-	return z;
+	return mproc_1arg(atan,x);
+}
+
+phcalc_num phcalc_arctan2(phcalc_num x, phcalc_num y) {
+	return mproc_2arg(atan2,x,y);
+}
+
+int phcalc_length(phcalc_num *res, phcalc_vect vector) {
+	*res = phcalc_num_new(vector.len,0.0);
+	return 1;
+}
+
+int phcalc_sum(phcalc_num *res, phcalc_vect vector) {
+	int i;
+	phcalc_num sum = { 0, 0 };
+	for(i=0; i<vector.len; i++){
+		if(vector.data[i].type!=PHC_OBJ_NUM)
+			return 0;
+		sum = phcalc_add(sum,vector.data[i].ref.num);
+	}
+	*res = sum;
+	return 1;
 }
 
 int phcalc_average(phcalc_num *res, phcalc_vect vector) {
@@ -298,5 +354,19 @@ int phcalc_mean(phcalc_num *res, phcalc_vect vector) {
 		res->error = v_sigma;
 	else
 		res->error = v_merr;
+	return 1;
+}
+
+int phcalc_dot(phcalc_num *res, phcalc_vect vector1, phcalc_vect vector2) {
+	int i;
+	phcalc_num sum = { 0, 0 };
+	if( vector1.len != vector2.len )
+		return 0;
+	for(i=0; i<vector1.len; i++){
+		if( vector1.data[i].type!=PHC_OBJ_NUM || vector2.data[i].type!=PHC_OBJ_NUM )
+			return 0;
+		sum = phcalc_add( sum, phcalc_mul(vector1.data[i].ref.num, vector2.data[i].ref.num) );
+	}
+	*res = sum;
 	return 1;
 }

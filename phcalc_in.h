@@ -71,14 +71,12 @@ typedef struct _phcalc_inst_def phcalc_inst_def;
 struct _phcalc_inst_def {
 	int type;
 	char *name;
-	//phcalc_expr expr;
 	phcalc_obj obj;
 	phcalc_inst_def *next;
 };
 
 struct _phcalc_inst {
 	int cd;
-	//phcalc_inst_def *defs;
 	lpHashTable defs;
 	phcalc_inst *imports;
 	int n_imports;
@@ -127,16 +125,10 @@ struct _phcalc_evalctx {
 };
 
 int phcalc_expr_allocname(phcalc_expr expr, const char *name);
-//const char *phcalc_expr_getname(phcalc_expr expr, int id);
 phcalc_expr phcalc_copyexpr(phcalc_expr expr, phcalc_toper *oper);
 
 void phcalc_adddef(phcalc_inst inst, const char *name, phcalc_expr expr);
 void phcalc_adddef_obj_nocopy(phcalc_inst inst, const char *name, phcalc_obj obj, int fdel);
-//phcalc_obj *phcalc_getdef(phcalc_inst inst, const char *name);
-
-//int phcalc_gettype(phcalc_inst inst, const char *name);
-//phcalc_num phcalc_getnum(phcalc_inst inst, const char *name);
-//phcalc_vector phcalc_getvecotr(phcalc_inst inst, const char *name);
 
 int phcalc_getoperpriority(phcalc_opertype opertype);
 
@@ -165,7 +157,6 @@ phcalc_num phcalc_sub(phcalc_num x, phcalc_num y);
 phcalc_num phcalc_mul(phcalc_num x, phcalc_num y);
 phcalc_num phcalc_div(phcalc_num x, phcalc_num y);
 phcalc_num phcalc_pow(phcalc_num x, phcalc_num y);
-
 phcalc_num phcalc_abs(phcalc_num x);
 phcalc_num phcalc_sqrt(phcalc_num x);
 phcalc_num phcalc_log(phcalc_num x);
@@ -176,8 +167,12 @@ phcalc_num phcalc_tan(phcalc_num x);
 phcalc_num phcalc_arcsin(phcalc_num x);
 phcalc_num phcalc_arccos(phcalc_num x);
 phcalc_num phcalc_arctan(phcalc_num x);
+phcalc_num phcalc_arctan2(phcalc_num x, phcalc_num y);
+int phcalc_length(phcalc_num *res, phcalc_vect vector);
+int phcalc_sum(phcalc_num *res, phcalc_vect vector);
 int phcalc_average(phcalc_num *res, phcalc_vect vector);
 int phcalc_mean(phcalc_num *res, phcalc_vect vector);
+int phcalc_dot(phcalc_num *res, phcalc_vect vector1, phcalc_vect vector2);
 
 // Memory fixes
 

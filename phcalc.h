@@ -67,6 +67,9 @@ void phcalc_destroy_inst(phcalc_inst inst);
 // Import definition from `src` into `inst`
 int phcalc_import(phcalc_inst inst, phcalc_inst imp);
 
+// Release imports
+int phcalc_release_imports(phcalc_inst inst);
+
 // Parse expression
 phcalc_expr phcalc_parse(const char *str);
 

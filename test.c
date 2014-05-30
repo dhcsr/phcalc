@@ -21,8 +21,11 @@ void test_1() {
 	test_prim_funcs();
 	test_prim_eval();
 	test_csv();
-	/*FILE *fd = fopen("prog.txt","rt");
-	phcalc_inst calc = phcalc_parsefile(fd);*/
+	/*{
+		FILE *fd = fopen("prog.txt","rt");
+		phcalc_inst calc = phcalc_parsefile(fd);
+		phcalc_destroy_inst(calc);
+	}*/
 }
 
 void test_prim_funcs() {
@@ -33,8 +36,8 @@ void test_prim_funcs() {
 	assert( !dequal(4.0001,4.0002) );
 	assert( requal2( phcalc_add(x,y), 25, 0.3 ) );
 	assert( requal2( phcalc_sub(x,y), -5, 0.3 ) );
-	assert( requal2( phcalc_mul(x,y), 10*15, 3.5 ) );
-	assert( requal2( phcalc_div(x,y), 10.0/15.0, 0.015555555555555555 ) );
+	assert( requal2( phcalc_mul(x,y), 10*15, 3.52 ) );
+	assert( requal2( phcalc_div(x,y), 10.0/15.0, 0.015765765765765716 ) );
 }
 
 int dequal(double x, double y) {

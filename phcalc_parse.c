@@ -71,6 +71,7 @@ phcalc_inst phcalc_parsefile(FILE *fd) {
 		phcalc_parse_printerror(stderr,&err);
 		return 0;
 	}
+	free(src);
 	if( !phcalc_parse_syntax(tokens,len,&stree,&err) ){
 		phcalc_release_tokens(tokens,len);
 		phcalc_parse_printerror(stderr,&err);

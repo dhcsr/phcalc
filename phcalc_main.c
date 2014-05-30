@@ -197,6 +197,15 @@ int phcalc_import(phcalc_inst inst, phcalc_inst imp) {
 	return 1;
 }
 
+int phcalc_release_imports(phcalc_inst inst) {
+	int i;
+	for(i=0; i<inst->n_imports; i++)
+		phcalc_destroy_inst( inst->imports[i] );
+	FREE(inst->imports);
+	inst->imports = 0;
+	return 1;
+}
+
 int phcalc_expr_allocname(phcalc_expr expr, const char *name) {
 	int i=0;
 	if(expr->names!=0){
