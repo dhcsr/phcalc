@@ -1,3 +1,13 @@
+/**************************************
+ *         Physics calculator
+ *            CSR, 2014
+ * http://info.dcsr.ru/projects/phcalc/
+ * https://github.com/dhcsr/phcalc
+ *
+ * Testing source file
+ *
+ **************************************/
+
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <stdio.h>
@@ -10,6 +20,7 @@
 
 void test_prim_funcs();
 void test_prim_eval();
+void test_def();
 void test_csv();
 
 int dequal(double x, double y);
@@ -65,10 +76,29 @@ void test_prim_eval() {
 	phcalc_destroy_inst(calc);
 }
 
-void test_csv() {
+void test_def() {
 	phcalc_inst calc = phcalc_create_inst();
-	FILE *file = fopen("1.csv","rt");
+	phcalc_expr e1 = phcalc_parse("x=100+3");
+	phcalc_expr e2 = phcalc_parse("2*x");
+	phcalc_obj r1;
+	assert( phcalc_define(calc,e1) );
+	assert( phcalc_eval(calc,e2,&r1) );
+	assert( r1.type==PHC_OBJ_NUM );
+	assert( requal2( r1.ref.num, (100+3)*2, 0.0 ) );
+	phcalc_release_obj(calc,&r1);
+	phcalc_expr_release(e1);
+	phcalc_expr_release(e2);
+	phcalc_destroy_inst(calc);
+}
+
+void test_csv() {
 	const char *fields[] = { "n", "x" };
-	phcalc_csv_load(calc,file,fields,2,0);
+	phcalc_inst calc = phcalc_create_inst();
+	FILE *file = fopen("test.csv","rt");
+	if(file==0){
+		printf("Unable to test CSV-loader: test.csv not found\n");
+		return;
+	}
+	assert( phcalc_csv_load(calc,file,fields,2,0) );
 	phcalc_destroy_inst(calc);
 }

@@ -21,13 +21,19 @@ struct _HashTable {
 typedef struct _HashTable HashTable;
 typedef struct _HashTable *lpHashTable;
 
-//void h_delete(HashTable *tab, void *key);
-
-int hash(void *key) {
+// Jenkins hash function
+unsigned long hash(void *key) {
 	char *str = (char*) key;
-	int code=0, i;
-	for(i=0; str[i]!=0; i++)
-		code += str[i];
+	unsigned long code = 0x3F230156;
+	int i;
+	for(i=0; str[i]!=0; i++){
+		code += (unsigned char) str[i];
+		code += code << 10;
+		code ^= code >> 6;
+	}
+	code += code << 3;
+	code ^= code >> 11;
+	code += code << 15;
 	return code;
 }
 

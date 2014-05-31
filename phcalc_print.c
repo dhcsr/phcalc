@@ -1,3 +1,14 @@
+/**************************************
+ *         Physics calculator
+ *            CSR, 2014
+ * http://info.dcsr.ru/projects/phcalc/
+ * https://github.com/dhcsr/phcalc
+ *
+ * Converting to string function
+ * Source file
+ *
+ **************************************/
+
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <stdlib.h>
@@ -5,6 +16,8 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
+#include <assert.h>
+#include <float.h>
 
 #include "phcalc.h"
 #include "phcalc_in.h"
@@ -105,10 +118,26 @@ int phcalc_strnum(phcalc_num num, char *str, int len) {
 	int exp;
 	double val, err, mul;
 		// retrieve exponent
+	if( _isnan(num.value) ){
+		strcpy(str,"NaN");
+		return 1;
+	}
+	if( !_finite(num.value) ){
+		strcpy(str,"Infinity");
+		return 1;
+	}
 	if( num.value==0.0 )
 		exp = 0;
 	else
 		exp = (int) floor( log10( dabs(num.value) ) );
+	if( num.error != 0.0 ){
+		int exp2;
+		if( num.error > 0.0 ){
+			exp2 = (int) floor( log10( num.error ) );
+			if( exp2 > exp+2 )
+				exp = exp2;
+		}
+	}
 	if( exp<3 && exp>-3 )	// if less then 3, do not use exponent
 		exp = 0;
 	mul = pow(10.0,exp);	// multiplier = 10^exp
@@ -116,8 +145,12 @@ int phcalc_strnum(phcalc_num num, char *str, int len) {
 	err = num.error / mul;
 	if( dcmp(err,0.0)==0 )
 		sprintf(buf,"%f",(float)val);
-	else
-		sprintf(buf,"%f'%f",(float)val,(float)err);
+	else {
+		if( _isnan(num.error) || (!_finite(num.error)) )
+			sprintf(buf,"%f'Infinity",(float)val);
+		else
+			sprintf(buf,"%f'%f",(float)val,(float)err);
+	}
 	buf2 = buf + strlen(buf);
 	if(exp!=0)
 		sprintf(buf2,"e%d",exp);

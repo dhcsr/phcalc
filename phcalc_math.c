@@ -1,4 +1,15 @@
+/**************************************
+ *         Physics calculator
+ *            CSR, 2014
+ * http://info.dcsr.ru/projects/phcalc/
+ * https://github.com/dhcsr/phcalc
+ *
+ * Mathematic functions source file
+ *
+ **************************************/
+
 #define _USE_MATH_DEFINES
+
 #include <math.h>
 #include <string.h>
 #include <assert.h>
@@ -155,7 +166,10 @@ int phcalc_mfunc(phcalc_evalctx *ctx, const char *name, phcalc_obj *args, int na
 	} else if( strcmp(name,"Dot")==0 ){
 		assert(args[0].type==PHC_OBJ_VECT);
 		assert(args[1].type==PHC_OBJ_VECT);
-		assert( phcalc_dot(&fr,args[0].ref.vect,args[1].ref.vect) );
+		ret_num = phcalc_dot(&fr,args[0].ref.vect,args[1].ref.vect);
+	} else if( strcmp(name,"Norm")==0 ){
+		assert(args[0].type==PHC_OBJ_VECT);
+		assert( phcalc_norm(&fr,args[0].ref.vect) );
 	} else
 		ret_num = 0;
 	if(ret_num){
@@ -368,5 +382,17 @@ int phcalc_dot(phcalc_num *res, phcalc_vect vector1, phcalc_vect vector2) {
 		sum = phcalc_add( sum, phcalc_mul(vector1.data[i].ref.num, vector2.data[i].ref.num) );
 	}
 	*res = sum;
+	return 1;
+}
+
+int phcalc_norm(phcalc_num *res, phcalc_vect vector) {
+	int i;
+	phcalc_num sum = { 0, 0 };
+	for(i=0; i<vector.len; i++){
+		if( vector.data[i].type!=PHC_OBJ_NUM )
+			return 0;
+		sum = phcalc_add( sum, phcalc_mul(vector.data[i].ref.num, vector.data[i].ref.num) );
+	}
+	*res = phcalc_sqrt(sum);
 	return 1;
 }

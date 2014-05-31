@@ -48,20 +48,6 @@ typedef enum _phcalc_opertype {
 	PHC_OPER_POW		// power ( ^ )
 } phcalc_opertype;
 
-//typedef enum _phcalc_deftype {
-//};
-
-/*
-Operators priorities
-
-1	:=
-2	= < >
-3	+ -
-4	* /
-5	^
-
-*/
-
 #define PHC_OPERF_PEXPR		0x0001		// pass argument as expression, used in function definitions
 
 typedef struct _phcalc_toper phcalc_toper;
@@ -173,6 +159,7 @@ int phcalc_sum(phcalc_num *res, phcalc_vect vector);
 int phcalc_average(phcalc_num *res, phcalc_vect vector);
 int phcalc_mean(phcalc_num *res, phcalc_vect vector);
 int phcalc_dot(phcalc_num *res, phcalc_vect vector1, phcalc_vect vector2);
+int phcalc_norm(phcalc_num *res, phcalc_vect vector);
 
 // Memory fixes
 

@@ -109,6 +109,8 @@ phcalc_obj *phcalc_getdef(phcalc_inst inst, const char *name);
 // Evaluate (calculate) expression, result is stored to `res`
 int phcalc_eval(phcalc_inst inst, phcalc_expr expr, phcalc_obj *res);
 
-
+// Load csv file
 int phcalc_csv_load(phcalc_inst inst, FILE *file, const char **fields, int n_fields, unsigned long flags);
-int phcalc_csv_save(phcalc_inst inst, FILE *file, const char **fields, int n_fields, unsigned long flags);
+
+// Save csv file
+//int phcalc_csv_save(phcalc_inst inst, FILE *file, const char **fields, int n_fields, unsigned long flags);

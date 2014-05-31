@@ -1,5 +1,16 @@
+/**************************************
+ *         Physics calculator
+ *            CSR, 2014
+ * http://info.dcsr.ru/projects/phcalc/
+ * https://github.com/dhcsr/phcalc
+ *
+ * Main (User Interface) source file
+ *
+ **************************************/
+
 #define _CRT_SECURE_NO_WARNINGS
 #define _CRTDBG_MAP_ALLOC
+
 #include <stdlib.h>
 #include <crtdbg.h>
 
@@ -8,10 +19,11 @@
 
 #include "phcalc.h"
 
-#define BUF_SZ	512
+#define BUF_SZ	4096
 
 int main_routine();		// Main routine loop
 void test_1();			// Run tests
+void print_hello();		// Print hello
 void print_help();		// Print help
 
 int main(int argc, char *argv[]){
@@ -22,7 +34,8 @@ int main(int argc, char *argv[]){
 
 int main_routine() {
 	phcalc_inst calc = phcalc_create_inst();
-	char buf[BUF_SZ];
+	char *buf = (char*) malloc(sizeof(char)*BUF_SZ);
+	print_hello();
 	for(;;){
 		char *arg;
 		gets(buf);
@@ -63,7 +76,8 @@ int main_routine() {
 			if(obj!=0){
 				phcalc_strobj(obj,buf,BUF_SZ);
 				printf("%s\n",buf);
-			}
+			} else
+				printf("Error: object isn't found\n");
 		} else if( strcmp(buf,"csv-load")==0 ){
 			char *fields[32];
 			char *s2 = strchr(arg,' ');
@@ -94,7 +108,6 @@ int main_routine() {
 			if(file != 0){
 				imp = phcalc_parsefile(file);
 				if(imp != 0){
-					//phcalc_destroy_inst(imp);
 					if( !phcalc_import(calc,imp) )
 						printf("Error\n");
 				} else
@@ -111,7 +124,19 @@ int main_routine() {
 	}
 	phcalc_release_imports(calc);
 	phcalc_destroy_inst(calc);
+	free(buf);
 	return 0;
+}
+
+void print_hello() {
+	puts(
+		"  Physics calculator\n"
+		"        PHCALC\n"
+		"       CSR, 2014\n"
+		"\n"
+		"Enter your command\n"
+		"(print 'help' for help):\n"
+		);
 }
 
 void print_help() {
@@ -126,6 +151,8 @@ void print_help() {
 		"        eval 1+f(x)\n"
 		"print - print definition\n"
 		"        print x\n"
+		"load  - load program from file\n"
+		"        load filename.txt\n"
 		"csv-load - load csv file\n"
 		"        csv-load filename.csv x,y,z\n"
 		"help  - help\n"

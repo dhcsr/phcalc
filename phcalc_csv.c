@@ -57,7 +57,7 @@ int phcalc_csv_load(phcalc_inst inst, FILE *file, const char **fields, int n_fie
 	for(j=0; j<count; j++)
 		FREE(listing[j]);
 	FREE(listing);
-	return 0;
+	return 1;
 }
 
 int phcalc_csv_save(phcalc_inst inst, FILE *file, const char **fields, int n_fields, unsigned long flags) {

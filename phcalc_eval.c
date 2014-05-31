@@ -268,7 +268,8 @@ int phcalc_getargtypes(phcalc_evalctx *ctx, phcalc_toper *oper, phcalc_typedef *
 			|| strcmp(name,"Sum")==0
 			|| strcmp(name,"Norm")==0
 			|| strcmp(name,"Average")==0
-			|| strcmp(name,"Mean")==0 ){
+			|| strcmp(name,"Mean")==0
+			|| strcmp(name,"Norm")==0 ){
 			if(oper->nargs!=1)
 				return 0;
 			types[0].type = PHC_OBJ_VECT;
